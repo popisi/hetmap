@@ -458,6 +458,16 @@ body::after{content:'';position:fixed;inset:0;
         </div>
       </div>
 
+      <!-- API KEY INPUT -->
+      <div style="display:flex;gap:7px;align-items:center;margin-bottom:10px;padding:9px 12px;background:rgba(255,184,0,0.05);border:1px solid rgba(255,184,0,0.25);border-radius:8px;flex-wrap:wrap">
+        <span style="font-family:'Orbitron',monospace;font-size:8px;color:var(--gold);letter-spacing:1px;flex-shrink:0">🔑 ANTHROPIC API KEY:</span>
+        <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." 
+          style="flex:1;min-width:200px;background:rgba(0,0,0,0.5);border:1px solid var(--border);color:var(--bright);padding:6px 10px;border-radius:6px;font-family:monospace;font-size:11px;outline:none"
+          oninput="saveApiKey(this.value)">
+        <button onclick="toggleKeyVisible()" style="padding:5px 10px;background:rgba(255,184,0,0.1);border:1px solid var(--gold);color:var(--gold);border-radius:5px;font-size:9px;cursor:pointer">👁</button>
+        <span id="api-key-status" style="font-size:9px;color:var(--dim)">Not set</span>
+      </div>
+
       <!-- Quick Stats Row (AI feeds on these) -->
       <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:rgba(0,0,0,0.4);border-radius:8px;border:1px solid var(--border)">
         <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);width:100%;margin-bottom:4px;letter-spacing:2px">📡 LIVE DATA FEEDING INTO AI:</div>
@@ -1676,9 +1686,18 @@ async function runAIAnalysis(mode='full'){
     const context=buildMarketContext(mode);
     const prompt=getAIPrompt(mode,context);
 
+    const apiKey=localStorage.getItem('anthropic_api_key')||'';
+    if(!apiKey||!apiKey.startsWith('sk-ant')){
+      throw new Error('API Key nahi hai — Neeche key enter karo pehle');
+    }
     const response=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:1000,
@@ -1821,6 +1840,29 @@ const _origUpdateSignal=typeof updateSignal==='function'?updateSignal:null;
 // ============================================================
 // CHANGE COIN + MAIN INIT
 // ============================================================
+function saveApiKey(val){
+  if(val&&val.startsWith('sk-ant')){
+    localStorage.setItem('anthropic_api_key',val);
+    set('api-key-status','✅ Saved');
+    styl('api-key-status','color','var(--green)');
+  } else if(val.length>5){
+    set('api-key-status','❌ Invalid key');
+    styl('api-key-status','color','var(--red)');
+  }
+}
+function toggleKeyVisible(){
+  const inp=el('api-key-input');
+  if(inp)inp.type=inp.type==='password'?'text':'password';
+}
+function loadApiKey(){
+  const k=localStorage.getItem('anthropic_api_key')||'';
+  const inp=el('api-key-input');
+  if(inp&&k){
+    inp.value=k;
+    set('api-key-status','✅ Key loaded');
+    styl('api-key-status','color','var(--green)');
+  }
+}
 function changeCoin(){
   coin=el('coinsel')?.value||'BTCUSDT';
   const tv=el('tv-container');if(tv)tv.innerHTML=''; // reset TV
@@ -1837,6 +1879,7 @@ async function init(){
   for(const[p,t]of steps){el('lpf').style.width=p+'%';set('ltxt',t);await new Promise(r=>setTimeout(r,300));}
   await loadAll();
   ov.classList.remove('show');
+  loadApiKey();
   initTVChart();
   setTimeout(()=>loadCoinglassLiq(),1500);
   setTimeout(()=>loadFundingExchanges(),2000);
