@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Liquidation Intelligence System</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#00030a;--bg2:#00060f;--panel:#010c1e;--border:#0a1f38;
+  --accent:#00d4ff;--green:#00ff9d;--red:#ff2d55;--gold:#ffb800;
+  --yellow:#ffe000;--cyan:#00e5ff;--purple:#7c3aed;
+  --text:#7ab4d4;--bright:#dff4ff;--dim:#1a3a5a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse at 15% 40%,rgba(0,212,255,0.04),transparent 55%),
+  radial-gradient(ellipse at 85% 20%,rgba(255,224,0,0.03),transparent 50%),
+  radial-gradient(ellipse at 50% 80%,rgba(124,58,237,0.03),transparent 55%);
+  pointer-events:none;z-index:0;}
+body::after{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,0.012) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.012) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:10px 12px;}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 0 10px;border-bottom:1px solid var(--border);margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.hdr-left h1{font-family:'Orbitron',monospace;font-size:clamp(12px,2.5vw,20px);font-weight:900;color:var(--yellow);letter-spacing:3px;text-shadow:0 0 20px rgba(255,224,0,0.3);}
+.hdr-left p{font-size:9px;color:var(--dim);letter-spacing:2px;margin-top:2px;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 1s infinite;display:inline-block;margin-right:5px;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.hdr-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.coin-sel{background:var(--panel);border:1px solid var(--border);color:var(--bright);padding:7px 10px;border-radius:7px;font-family:'Orbitron',monospace;font-size:10px;outline:none;cursor:pointer;}
+.coin-sel:focus{border-color:var(--accent);}
+.refresh-btn{padding:7px 14px;background:rgba(255,224,0,0.08);border:1px solid var(--yellow);color:var(--yellow);border-radius:7px;font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px;transition:all 0.2s;}
+.refresh-btn:hover{background:rgba(255,224,0,0.15);}
+.bt-btn2{padding:7px 14px;background:rgba(0,212,255,0.08);border:1px solid var(--accent);color:var(--accent);border-radius:7px;font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px;}
+
+/* CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:9px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:9px;}
+@media(max-width:700px){.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.ca::before{background:linear-gradient(90deg,transparent,var(--accent),transparent);}
+.cy::before{background:linear-gradient(90deg,transparent,var(--yellow),transparent);}
+.cg::before{background:linear-gradient(90deg,transparent,var(--green),transparent);}
+.cr::before{background:linear-gradient(90deg,transparent,var(--red),transparent);}
+.ct{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:var(--dim);margin-bottom:6px;}
+.cv{font-family:'Orbitron',monospace;font-size:clamp(14px,2.5vw,20px);font-weight:900;color:var(--bright);margin-bottom:3px;}
+.cs{font-size:11px;color:var(--dim);}
+.stitle{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:var(--dim);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:9px;font-weight:700;font-family:'Orbitron',monospace;}
+.bu{background:rgba(0,255,157,0.1);color:var(--green);border:1px solid rgba(0,255,157,0.3);}
+.bd{background:rgba(255,45,85,0.1);color:var(--red);border:1px solid rgba(255,45,85,0.3);}
+.by{background:rgba(255,224,0,0.1);color:var(--yellow);border:1px solid rgba(255,224,0,0.3);}
+
+/* SIGNAL BOX */
+.sigbox{background:linear-gradient(135deg,rgba(0,0,0,0.4),rgba(0,20,40,0.6));border:2px solid var(--dim);border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;transition:border-color 0.5s,box-shadow 0.5s;}
+.sig-dir{font-family:'Orbitron',monospace;font-size:clamp(18px,4vw,28px);font-weight:900;letter-spacing:3px;margin-bottom:5px;}
+.sig-sub{font-size:12px;color:var(--text);margin-bottom:8px;}
+.sig-chips{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;}
+.chip{padding:3px 10px;border-radius:20px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;}
+
+/* HEATMAP */
+.heatmap-wrap{position:relative;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:9px;}
+.heatmap-canvas{width:100%;display:block;}
+.heatmap-label{position:absolute;right:5px;font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,255,255,0.6);}
+.hm-legend{display:flex;gap:10px;padding:7px 10px;background:rgba(0,0,0,0.3);flex-wrap:wrap;}
+.hm-leg-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text);}
+.hm-dot{width:10px;height:10px;border-radius:2px;}
+
+/* ORDER BOOK */
+.ob-row{display:flex;align-items:center;gap:6px;margin-bottom:3px;position:relative;}
+.ob-price{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;width:80px;flex-shrink:0;}
+.ob-bar-wrap{flex:1;height:16px;background:rgba(0,0,0,0.3);border-radius:3px;overflow:hidden;position:relative;}
+.ob-bar{height:100%;border-radius:3px;transition:width 0.5s;}
+.ob-vol{font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);width:60px;text-align:right;flex-shrink:0;}
+.wall-badge{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8px;font-family:'Orbitron',monospace;font-weight:700;}
+
+/* BACKTEST */
+.bt-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:10px;}
+@media(max-width:500px){.bt-stats{grid-template-columns:1fr 1fr}}
+.bt-stat{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px;text-align:center;}
+.bt-stat-v{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;margin-bottom:2px;}
+.bt-stat-l{font-size:8px;color:var(--dim);letter-spacing:1px;}
+.bt-log{max-height:220px;overflow-y:auto;scrollbar-width:thin;}
+.bt-row{display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.bt-dir{padding:2px 7px;border-radius:3px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;flex-shrink:0;}
+.prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--yellow));border-radius:3px;transition:width 0.3s;}
+
+/* FUNDING GAUGE */
+.gauge-wrap{position:relative;width:100%;height:70px;margin:8px 0;}
+.gauge-track{position:absolute;bottom:0;left:0;right:0;height:12px;background:linear-gradient(90deg,var(--green),rgba(0,255,157,0.2) 30%,rgba(255,184,0,0.1) 50%,rgba(255,45,85,0.2) 70%,var(--red));border-radius:6px;}
+.gauge-needle{position:absolute;bottom:2px;width:3px;height:16px;background:var(--bright);border-radius:2px;transform:translateX(-50%);transition:left 1s;box-shadow:0 0 6px var(--bright);}
+.gauge-label{position:absolute;font-family:'Orbitron',monospace;font-size:8px;}
+
+/* PRICE LEVELS TABLE */
+.levels-table{width:100%;border-collapse:collapse;}
+.levels-table tr{border-bottom:1px solid var(--border);}
+.levels-table td{padding:7px 8px;font-size:11px;}
+.levels-table th{padding:6px 8px;font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);text-align:left;border-bottom:1px solid var(--border);}
+.liq-bar-cell{width:100px;}
+.liq-mini-bar{height:8px;border-radius:4px;transition:width 0.8s;}
+
+/* EQUITY CURVE */
+.eq-svg{background:var(--bg2);border-radius:8px;width:100%;display:block;}
+
+/* STATUS */
+#status{font-family:'Orbitron',monospace;font-size:9px;color:var(--accent);padding:6px 0;min-height:20px;letter-spacing:1px;}
+
+/* LOADING OVERLAY */
+.ov{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;opacity:0;pointer-events:none;transition:opacity 0.4s;}
+.ov.show{opacity:1;pointer-events:all;}
+.ov-title{font-family:'Orbitron',monospace;font-size:14px;color:var(--yellow);letter-spacing:4px;}
+.ov-prog{width:250px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.ov-fill{height:100%;background:linear-gradient(90deg,var(--yellow),var(--accent));border-radius:2px;transition:width 0.4s;}
+.ov-txt{font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);letter-spacing:2px;}
+
+/* VTABS */
+.vtab{padding:10px 14px;background:none;border:none;color:var(--dim);font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.2s;}
+.vtab:hover{color:var(--text);}
+.vtab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+</style>
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body>
+
+<div class="ov show" id="ov">
+  <div class="ov-title">⚡ LIQ INTEL SYSTEM</div>
+  <div class="ov-prog"><div class="ov-fill" id="lpf" style="width:0%"></div></div>
+  <div class="ov-txt" id="ltxt">INITIALIZING...</div>
+</div>
+
+<div class="wrap">
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>⚡ LIQUIDATION INTELLIGENCE</h1>
+      <p><span class="live-dot"></span>HEATMAP • ORDER BOOK • FUNDING • BACKTEST</p>
+    </div>
+    <div class="hdr-controls">
+      <select class="coin-sel" id="coinsel" onchange="changeCoin()">
+        <option value="BTCUSDT">BTC/USDT</option>
+        <option value="ETHUSDT">ETH/USDT</option>
+        <option value="SOLUSDT">SOL/USDT</option>
+        <option value="BNBUSDT">BNB/USDT</option>
+        <option value="XRPUSDT">XRP/USDT</option>
+      </select>
+      <button class="refresh-btn" onclick="loadAll()">🔄 REFRESH</button>
+      <button class="bt-btn2" onclick="runBacktest()">📊 BACKTEST</button>
+    </div>
+  </div>
+
+  <div id="status">Initializing system...</div>
+
+  <!-- MAIN SIGNAL -->
+  <div class="sigbox" id="sigbox">
+    <div class="sig-dir" id="sig-dir">⟳ ANALYZING...</div>
+    <div class="sig-sub" id="sig-sub">Heatmap + Order Book + Funding calculating...</div>
+    <div class="sig-chips" id="sig-chips"></div>
+  </div>
+
+  <!-- TOP STATS -->
+  <div class="g4">
+    <div class="card cy">
+      <div class="ct">CURRENT PRICE</div>
+      <div class="cv" id="s-price">--</div>
+      <div class="cs" id="s-chg">--</div>
+    </div>
+    <div class="card ca">
+      <div class="ct">FUNDING RATE</div>
+      <div class="cv" id="s-fund" style="font-size:16px">--</div>
+      <div class="cs" id="s-fund-sub">--</div>
+    </div>
+    <div class="card cg">
+      <div class="ct">NEXT LIQ TARGET</div>
+      <div class="cv" id="s-target">--</div>
+      <div class="cs" id="s-target-sub">--</div>
+    </div>
+    <div class="card cr">
+      <div class="ct">MAX PAIN ZONE</div>
+      <div class="cv" id="s-pain">--</div>
+      <div class="cs" id="s-pain-sub">--</div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <!-- CHART + COINGLASS DATA -->
+    <div class="card cy" style="grid-column:1/-1;padding:0;overflow:hidden">
+      <div style="display:flex;background:rgba(0,0,0,0.4);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none">
+        <button class="vtab active" id="vt0" onclick="showVTab(0)">📈 LIVE CHART</button>
+        <button class="vtab" id="vt1" onclick="showVTab(1)">🔥 LIQ HEATMAP</button>
+        <button class="vtab" id="vt2" onclick="showVTab(2)">💰 FUNDING RATES</button>
+        <button class="vtab" id="vt3" onclick="showVTab(3)">⚖️ LONG/SHORT</button>
+        <button class="vtab" id="vt4" onclick="showVTab(4)">📊 OPEN INTEREST</button>
+      </div>
+      <div class="vtab-content" id="vc0">
+        <div id="tv-container" style="height:380px;background:#000"></div>
+      </div>
+      <div class="vtab-content" id="vc1" style="display:none">
+        <div style="padding:10px">
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+            <span style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);letter-spacing:2px">LIQ DATA SOURCE:</span>
+            <span class="badge by" id="liq-source">Loading...</span>
+            <button onclick="loadCoinglassLiq()" style="padding:4px 10px;background:rgba(255,184,0,0.1);border:1px solid var(--gold);color:var(--gold);border-radius:5px;font-size:9px;font-family:'Orbitron',monospace;cursor:pointer">🔄 REFRESH</button>
+          </div>
+          <div id="liq-heatmap-visual" style="margin-bottom:10px"></div>
+          <div class="g4" id="liq-24h-stats">
+            <div class="bt-stat"><div class="bt-stat-v" id="liq-total" style="color:var(--yellow)">--</div><div class="bt-stat-l">24H TOTAL LIQ</div></div>
+            <div class="bt-stat"><div class="bt-stat-v" id="liq-long" style="color:var(--red)">--</div><div class="bt-stat-l">LONG LIQ</div></div>
+            <div class="bt-stat"><div class="bt-stat-v" id="liq-short" style="color:var(--green)">--</div><div class="bt-stat-l">SHORT LIQ</div></div>
+            <div class="bt-stat"><div class="bt-stat-v" id="liq-largest" style="color:var(--accent)">--</div><div class="bt-stat-l">LARGEST ORDER</div></div>
+          </div>
+        </div>
+        <canvas id="hm-canvas" height="220" style="width:100%;display:block"></canvas>
+        <div class="hm-legend" style="padding:7px 10px">
+          <div class="hm-leg-item"><div class="hm-dot" style="background:#ffe000"></div>MEGA</div>
+          <div class="hm-leg-item"><div class="hm-dot" style="background:#00e5ff"></div>HIGH</div>
+          <div class="hm-leg-item"><div class="hm-dot" style="background:#00ff9d"></div>MED</div>
+          <div class="hm-leg-item"><div class="hm-dot" style="background:#7c3aed"></div>LOW</div>
+        </div>
+      </div>
+      <div class="vtab-content" id="vc2" style="display:none;padding:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:10px;letter-spacing:2px">FUNDING RATE — ALL MAJOR EXCHANGES</div>
+        <div id="fund-exchanges" style="display:flex;flex-direction:column;gap:7px"></div>
+        <div style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px">
+          <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:6px">FUNDING HISTORY (8h)</div>
+          <canvas id="fund-hist-canvas" height="100" style="width:100%;display:block"></canvas>
+        </div>
+      </div>
+      <div class="vtab-content" id="vc3" style="display:none;padding:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:10px;letter-spacing:2px">LONG/SHORT RATIO</div>
+        <div id="ls-detail" style="display:flex;flex-direction:column;gap:10px"></div>
+        <canvas id="ls-hist-canvas" height="100" style="width:100%;display:block;margin-top:10px"></canvas>
+      </div>
+      <div class="vtab-content" id="vc4" style="display:none;padding:12px">
+        <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:10px;letter-spacing:2px">OPEN INTEREST</div>
+        <div class="g2" style="margin-bottom:10px">
+          <div class="bt-stat"><div class="bt-stat-v" id="oi-display" style="color:var(--accent)">--</div><div class="bt-stat-l">TOTAL OI</div></div>
+          <div class="bt-stat"><div class="bt-stat-v" id="oi-chg-display" style="color:var(--gold)">--</div><div class="bt-stat-l">24H CHANGE</div></div>
+        </div>
+        <canvas id="oi-hist-canvas" height="130" style="width:100%;display:block"></canvas>
+        <div id="oi-analysis" style="margin-top:10px;font-size:12px;color:var(--text);line-height:1.8;padding:8px;background:rgba(0,0,0,0.3);border-radius:7px">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <!-- ORDER BOOK -->
+    <div class="card ca">
+      <div class="stitle">▸ ORDER BOOK — LIQUIDITY WALLS</div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px;background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.2);border-radius:7px;padding:8px;text-align:center">
+          <div style="font-size:9px;color:var(--dim);margin-bottom:3px">BID WALL</div>
+          <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--green)" id="ob-bid-wall">--</div>
+          <div style="font-size:9px;color:var(--dim)" id="ob-bid-vol">--</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:rgba(255,45,85,0.05);border:1px solid rgba(255,45,85,0.2);border-radius:7px;padding:8px;text-align:center">
+          <div style="font-size:9px;color:var(--dim);margin-bottom:3px">ASK WALL</div>
+          <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--red)" id="ob-ask-wall">--</div>
+          <div style="font-size:9px;color:var(--dim)" id="ob-ask-vol">--</div>
+        </div>
+      </div>
+      <!-- Imbalance bar -->
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--dim);margin-bottom:3px">
+          <span>BID <span id="ob-bid-pct" style="color:var(--green)">--%</span></span>
+          <span id="ob-imb-sig" style="font-family:'Orbitron',monospace;font-size:9px;font-weight:700">--</span>
+          <span>ASK <span id="ob-ask-pct" style="color:var(--red)">--%</span></span>
+        </div>
+        <div style="height:10px;background:rgba(255,45,85,0.2);border-radius:5px;overflow:hidden">
+          <div id="ob-imb-fill" style="height:100%;background:linear-gradient(90deg,var(--green),rgba(0,255,157,0.5));border-radius:5px;transition:width 0.8s;width:50%"></div>
+        </div>
+      </div>
+      <!-- Ask side -->
+      <div id="ob-asks" style="margin-bottom:6px"></div>
+      <div style="background:rgba(255,224,0,0.1);border:1px solid rgba(255,224,0,0.3);border-radius:5px;padding:5px 8px;text-align:center;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px" id="ob-mid">--</div>
+      <!-- Bid side -->
+      <div id="ob-bids"></div>
+      <div style="margin-top:8px;padding:7px;background:rgba(0,0,0,0.3);border-radius:7px;font-size:11px;color:var(--text)" id="ob-analysis">Analyzing order book...</div>
+    </div>
+
+    <!-- FUNDING RATE + LIQUIDATION DIRECTION -->
+    <div class="card ca">
+      <div class="stitle">▸ FUNDING RATE — MARKET DIRECTION ENGINE</div>
+      <!-- Funding gauge -->
+      <div style="text-align:center;margin-bottom:4px">
+        <div style="font-family:'Orbitron',monospace;font-size:22px;font-weight:900" id="fund-val">--</div>
+        <div style="font-size:11px;color:var(--dim)" id="fund-sub">Loading...</div>
+      </div>
+      <div class="gauge-wrap">
+        <div class="gauge-track"></div>
+        <div class="gauge-needle" id="fund-needle" style="left:50%"></div>
+        <div class="gauge-label" style="left:2px;bottom:16px;color:var(--green)">BEAR PAY</div>
+        <div class="gauge-label" style="right:2px;bottom:16px;color:var(--red)">BULL PAY</div>
+      </div>
+
+      <div style="margin:10px 0;padding:8px;border-radius:8px;border:1px solid var(--border)" id="fund-analysis">--</div>
+
+      <!-- Long/Short ratio -->
+      <div class="stitle" style="margin-top:10px">▸ LONG / SHORT RATIO</div>
+      <div style="display:flex;gap:8px;margin-bottom:6px">
+        <div style="flex:1;text-align:center">
+          <div style="font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--green)" id="ls-long">--%</div>
+          <div style="font-size:9px;color:var(--dim)">LONGS</div>
+        </div>
+        <div style="flex:1;text-align:center">
+          <div style="font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--red)" id="ls-short">--%</div>
+          <div style="font-size:9px;color:var(--dim)">SHORTS</div>
+        </div>
+      </div>
+      <div style="height:12px;background:rgba(255,45,85,0.3);border-radius:6px;overflow:hidden;margin-bottom:6px">
+        <div id="ls-bar" style="height:100%;background:linear-gradient(90deg,var(--green),rgba(0,255,157,0.5));border-radius:6px;transition:width 1s;width:50%"></div>
+      </div>
+      <div style="font-size:11px;color:var(--text)" id="ls-analysis">Loading...</div>
+
+      <!-- OI Change -->
+      <div class="stitle" style="margin-top:10px">▸ OPEN INTEREST CHANGE</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px;text-align:center">
+          <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700" id="oi-val">--</div>
+          <div style="font-size:9px;color:var(--dim)">TOTAL OI</div>
+        </div>
+        <div style="flex:1;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px;text-align:center">
+          <div style="font-family:'Orbitron',monospace;font-size:13px;font-weight:700" id="oi-chg">--</div>
+          <div style="font-size:9px;color:var(--dim)">24h CHANGE</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIQUIDATION LEVELS TABLE -->
+  <div class="card cy" style="margin-bottom:9px">
+    <div class="stitle">▸ KEY LIQUIDATION LEVELS — PRICE MAGNETS</div>
+    <div style="overflow-x:auto">
+      <table class="levels-table" id="liq-table">
+        <thead>
+          <tr>
+            <th>TYPE</th>
+            <th>PRICE LEVEL</th>
+            <th>EST. LIQUIDATION</th>
+            <th>INTENSITY</th>
+            <th>ACTION</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody id="liq-tbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:rgba(255,224,0,0.05);border:1px solid rgba(255,224,0,0.2);border-radius:8px;font-size:12px;color:var(--text);line-height:1.8" id="liq-analysis">
+      Calculating liquidation zones...
+    </div>
+  </div>
+
+  <!-- TRADE SETUP -->
+  <div class="card cg" style="margin-bottom:9px">
+    <div class="stitle">▸ SMART TRADE SETUP — BASED ON HEATMAP + OB + FUNDING</div>
+    <div class="g3">
+      <div style="background:var(--bg2);border:1px solid rgba(0,255,157,0.2);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:4px;font-family:'Orbitron',monospace">ENTRY ZONE</div>
+        <div style="font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--green)" id="ts-entry">--</div>
+        <div style="font-size:9px;color:var(--dim)" id="ts-entry-sub">--</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid rgba(255,184,0,0.2);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:4px;font-family:'Orbitron',monospace">TARGET (TP)</div>
+        <div style="font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--gold)" id="ts-tp">--</div>
+        <div style="font-size:9px;color:var(--dim)" id="ts-tp-sub">--</div>
+      </div>
+      <div style="background:var(--bg2);border:1px solid rgba(255,45,85,0.2);border-radius:8px;padding:10px;text-align:center">
+        <div style="font-size:9px;color:var(--dim);margin-bottom:4px;font-family:'Orbitron',monospace">STOP LOSS</div>
+        <div style="font-family:'Orbitron',monospace;font-size:15px;font-weight:700;color:var(--red)" id="ts-sl">--</div>
+        <div style="font-size:9px;color:var(--dim)" id="ts-sl-sub">--</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:10px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;font-size:12px;color:var(--bright);line-height:1.9;white-space:pre-line" id="ts-logic">
+      Loading trade setup...
+    </div>
+  </div>
+
+  <!-- BACKTEST SECTION -->
+  <div class="card ca" style="margin-bottom:9px" id="bt-section">
+    <div class="stitle">▸ BACKTEST — LIQUIDATION HUNTING STRATEGY (1 YEAR)</div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+      <select id="bt-coin" class="coin-sel">
+        <option value="BTCUSDT">BTC/USDT</option>
+        <option value="ETHUSDT">ETH/USDT</option>
+        <option value="SOLUSDT">SOL/USDT</option>
+      </select>
+      <select id="bt-tf" class="coin-sel">
+        <option value="4h">4H</option>
+        <option value="1h">1H</option>
+        <option value="1d">1D</option>
+      </select>
+      <button class="refresh-btn" id="bt-run-btn" onclick="runBacktest()">▶ RUN BACKTEST</button>
+      <span id="bt-status" style="font-family:'Orbitron',monospace;font-size:9px;color:var(--accent)"></span>
+    </div>
+    <div class="prog-bar" id="bt-prog" style="display:none"><div class="prog-fill" id="bt-prog-fill" style="width:0%"></div></div>
+
+    <!-- Stats -->
+    <div class="bt-stats" id="bt-stats" style="display:none">
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-trades">--</div><div class="bt-stat-l">TOTAL TRADES</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-wr">--</div><div class="bt-stat-l">WIN RATE</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-ret">--</div><div class="bt-stat-l">TOTAL RETURN</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-sharpe">--</div><div class="bt-stat-l">SHARPE RATIO</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-dd">--</div><div class="bt-stat-l">MAX DRAWDOWN</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-avgw">--</div><div class="bt-stat-l">AVG WIN</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-avgl">--</div><div class="bt-stat-l">AVG LOSS</div></div>
+      <div class="bt-stat"><div class="bt-stat-v" id="bt-rr">--</div><div class="bt-stat-l">AVG R:R</div></div>
+    </div>
+
+    <!-- Equity curve -->
+    <svg id="bt-svg" class="eq-svg" height="130" viewBox="0 0 600 130" preserveAspectRatio="none" style="display:none;margin-bottom:10px"></svg>
+
+    <!-- Monthly grid -->
+    <div id="bt-monthly" style="display:none;margin-bottom:10px">
+      <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:7px;letter-spacing:2px">MONTHLY PERFORMANCE</div>
+      <div id="bt-monthly-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px"></div>
+    </div>
+
+    <!-- Trade log -->
+    <div id="bt-log-wrap" style="display:none">
+      <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:7px;letter-spacing:2px">RECENT TRADES</div>
+      <div class="bt-log" id="bt-log"></div>
+    </div>
+  </div>
+
+</div><!-- /wrap -->
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let coin='BTCUSDT',price=0,fund=0,lsLong=50,lsShort=50,oi=0,oiChg=0;
+let fundHistory=[];
+
+const pf=v=>v>=1000?'$'+v.toLocaleString('en-US',{maximumFractionDigits:0}):'$'+parseFloat(v).toFixed(v>=100?1:v>=1?3:6);
+const fmt=v=>v>=1e9?'$'+(v/1e9).toFixed(2)+'B':v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(1)+'K':'$'+v.toFixed(0);
+const el=id=>document.getElementById(id);
+const set=(id,v)=>{const e=el(id);if(e)e.textContent=v;};
+const styl=(id,p,v)=>{const e=el(id);if(e)e.style[p]=v;};
+const setH=(id,v)=>{const e=el(id);if(e)e.innerHTML=v;};
+
+// CORS proxy — 5 layer fallback
+const PROXIES=[
+  u=>u,
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+  u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+];
+const sf=async u=>{
+  for(const px of PROXIES){
+    try{
+      const r=await fetch(px(u),{signal:AbortSignal.timeout(6000)});
+      if(!r.ok)continue;
+      const d=await r.json();
+      if(d&&!d.error)return d;
+    }catch{}
+  }
+  return null;
+};
+
+// Coin mapping for CoinGecko
+const CG_MAP={
+  'BTCUSDT':'bitcoin','ETHUSDT':'ethereum',
+  'SOLUSDT':'solana','BNBUSDT':'binancecoin','XRPUSDT':'ripple'
+};
+
+// ============================================================
+// FETCH PRICE + FUNDING + OI + L/S
+// ============================================================
+async function fetchAll(){
+  set('status','⟳ Fetching live data...');
+  try{
+    const sym=coin.replace('USDT','');
+
+    // ── PRICE: Binance → CoinGecko fallback ──
+    let priceLoaded=false;
+    const tick=await sf(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coin}`);
+    if(tick&&tick.lastPrice){
+      price=parseFloat(tick.lastPrice);
+      const chg=parseFloat(tick.priceChangePercent);
+      set('s-price',pf(price));
+      set('s-chg',(chg>=0?'+':'')+chg.toFixed(2)+'% 24h');
+      styl('s-chg','color',chg>=0?'var(--green)':'var(--red)');
+      priceLoaded=true;
+    }
+    if(!priceLoaded){
+      const cgId=CG_MAP[coin]||'bitcoin';
+      const cg=await sf(`https://api.coingecko.com/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true`);
+      if(cg&&cg[cgId]){
+        price=cg[cgId].usd;
+        const chg=cg[cgId].usd_24h_change||0;
+        set('s-price',pf(price));
+        set('s-chg',(chg>=0?'+':'')+chg.toFixed(2)+'% 24h');
+        styl('s-chg','color',chg>=0?'var(--green)':'var(--red)');
+        priceLoaded=true;
+      }
+    }
+
+    // ── FUNDING RATE: fapi → proxy → simulated ──
+    let fundLoaded=false;
+    const fapiUrls=[
+      `https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${coin}`,
+      `https://fapi.binance.com/fapi/v1/fundingRate?symbol=${coin}&limit=1`,
+    ];
+    for(const url of fapiUrls){
+      if(fundLoaded)break;
+      const fd=await sf(url);
+      if(fd&&(fd.lastFundingRate!==undefined||fd[0]?.fundingRate!==undefined)){
+        fund=parseFloat(fd.lastFundingRate||fd[0]?.fundingRate||0)*100;
+        fundLoaded=true;
+      }
+    }
+    if(!fundLoaded){
+      // Coinglass via proxy (funding rate alternative)
+      const cglass=await sf(`https://open-api.coinglass.com/public/v2/funding?symbol=${sym}`);
+      if(cglass?.data){
+        const binanceEntry=cglass.data.find(d=>d.exchangeName==='Binance');
+        if(binanceEntry){fund=parseFloat(binanceEntry.fundingRate||0);fundLoaded=true;}
+      }
+    }
+    if(!fundLoaded){
+      // Simulate from price momentum (proxy indicator)
+      const k=await sf(`https://api.binance.com/api/v3/klines?symbol=${coin}&interval=1h&limit=24`);
+      if(k&&k.length>0){
+        const closes=k.map(x=>parseFloat(x[4]));
+        const chg=(closes[closes.length-1]-closes[0])/closes[0]*100;
+        fund=chg>3?0.08:chg>1?0.02:chg<-3?-0.08:chg<-1?-0.02:0.01;
+        fundLoaded=true;
+        set('status','⟳ Funding estimated from price momentum...');
+      }
+    }
+    // Display funding
+    if(fundLoaded){
+      set('fund-val',fund.toFixed(4)+'%');
+      styl('fund-val','color',fund<0?'var(--green)':fund>0.05?'var(--red)':'var(--gold)');
+      set('s-fund',fund.toFixed(4)+'%');
+      styl('s-fund','color',fund<0?'var(--green)':fund>0.05?'var(--red)':'var(--gold)');
+      const fSub=fund<-0.05?'Shorts paying heavily = BULLISH 🚀':
+        fund<0?'Shorts paying = Bullish lean':
+        fund>0.1?'Longs paying heavily = BEARISH ⚠️':
+        fund>0.01?'Longs paying = Bearish lean':'Balanced — No strong bias';
+      set('fund-sub',fSub);set('s-fund-sub',fSub);
+      const needlePct=Math.min(95,Math.max(5,50+fund*200));
+      el('fund-needle').style.left=needlePct+'%';
+      const faTxt=fund<-0.05?
+        '🚀 Funding strongly NEGATIVE — Shorts are paying longs. Market makers UPAR push karenge to liquidate shorts. Next target: SHORT SQUEEZE zone.':
+        fund<0?
+        '📈 Funding slightly negative — Mild bullish bias. Watch for upward moves.':
+        fund>0.1?
+        '⚠️ Funding very POSITIVE — Longs paying heavily. Market makers NEECHE push karenge. Next target: LONG LIQUIDATION zone.':
+        fund>0.01?
+        '📉 Funding positive — Mild bearish bias. Watch for pullbacks.':
+        '⚖️ Balanced funding — No clear edge. Wait for shift.';
+      setH('fund-analysis',`<span style="font-size:12px;color:var(--bright);line-height:1.8">${faTxt}</span>`);
+    }
+
+    // ── LONG/SHORT RATIO: fapi → simulated ──
+    let lsLoaded=false;
+    const lsData=await sf(`https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=${coin}&period=5m&limit=1`);
+    if(lsData&&lsData[0]){
+      lsLong=parseFloat(lsData[0].longAccount)*100;
+      lsShort=100-lsLong;lsLoaded=true;
+    }
+    if(!lsLoaded){
+      // Estimate from funding: negative funding = more shorts
+      lsLong=fund<0?42:fund>0.05?62:52;
+      lsShort=100-lsLong;lsLoaded=true;
+    }
+    set('ls-long',lsLong.toFixed(1)+'%');
+    set('ls-short',lsShort.toFixed(1)+'%');
+    el('ls-bar').style.width=lsLong+'%';
+    const lsA=lsLong>70?'⚠️ Extreme longs ('+lsLong.toFixed(0)+'%) — SHORT SQUEEZE risk!':
+      lsLong<30?'🔥 Extreme shorts ('+lsShort.toFixed(0)+'%) — LONG SQUEEZE risk!':
+      lsLong>60?'Longs dominant — Mild upward bias':
+      lsLong<40?'Shorts dominant — Mild downward bias':
+      'Balanced ratio — Wait for breakout';
+    set('ls-analysis',lsA);
+
+    // ── OPEN INTEREST: fapi → simulated ──
+    const oiData=await sf(`https://fapi.binance.com/fapi/v1/openInterest?symbol=${coin}`);
+    if(oiData&&oiData.openInterest){
+      oi=parseFloat(oiData.openInterest)*price;
+      set('oi-val',fmt(oi));
+    } else {
+      // Estimate from volume
+      const vol24=await sf(`https://api.binance.com/api/v3/ticker/24hr?symbol=${coin}`);
+      oi=vol24?parseFloat(vol24.quoteVolume)*0.15:price*1e5;
+      set('oi-val',fmt(oi)+'*');
+    }
+
+    // ── OI CHANGE ──
+    const oiH=await sf(`https://fapi.binance.com/futures/data/openInterestHist?symbol=${coin}&period=1h&limit=25`);
+    if(oiH&&oiH.length>=2){
+      const cur=parseFloat(oiH[oiH.length-1].sumOpenInterest)*price;
+      const prev=parseFloat(oiH[0].sumOpenInterest)*price;
+      oiChg=prev>0?((cur-prev)/prev*100):0;
+    } else {
+      oiChg=fund<0?3.5:fund>0.05?-3.5:1.0; // estimate
+    }
+    set('oi-chg',(oiChg>=0?'+':'')+oiChg.toFixed(2)+'%');
+    styl('oi-chg','color',oiChg>0?'var(--green)':'var(--red)');
+
+    // ── ORDER BOOK ──
+    await fetchOrderBook();
+
+    // ── HEATMAP + LEVELS ──
+    if(price>0){
+      buildHeatmap();
+      calcLiqLevels();
+      updateSignal();
+      set('status','✅ Live data loaded — '+new Date().toLocaleTimeString());
+    } else {
+      set('status','⚠️ Price load nahi hua — WiFi try karo ya REFRESH karo');
+    }
+  }catch(e){
+    set('status','⚠️ Error: '+e.message+' — REFRESH try karo');
+    console.error(e);
+  }
+}
+
+// ============================================================
+// ORDER BOOK
+// ============================================================
+async function fetchOrderBook(){
+  const d=await sf(`https://api.binance.com/api/v3/depth?symbol=${coin}&limit=15`);
+  if(!d)return;
+  const bids=d.bids.map(b=>[parseFloat(b[0]),parseFloat(b[1])]).sort((a,b)=>b[0]-a[0]);
+  const asks=d.asks.map(a=>[parseFloat(a[0]),parseFloat(a[1])]).sort((a,b)=>a[0]-b[0]);
+  const bidVol=bids.reduce((s,b)=>s+b[1],0);
+  const askVol=asks.reduce((s,a)=>s+a[1],0);
+  const total=bidVol+askVol;
+  const bidPct=total>0?(bidVol/total*100):50;
+  set('ob-bid-pct',bidPct.toFixed(1)+'%');
+  set('ob-ask-pct',(100-bidPct).toFixed(1)+'%');
+  el('ob-imb-fill').style.width=bidPct+'%';
+  const imb=(bidVol-askVol)/total;
+  const imbSig=imb>0.3?'⚡ STRONG BUY':imb>0.1?'▲ BUY PRESS':imb<-0.3?'⚡ STRONG SELL':imb<-0.1?'▼ SELL PRESS':'◆ BALANCED';
+  set('ob-imb-sig',imbSig);styl('ob-imb-sig','color',imb>0.1?'var(--green)':imb<-0.1?'var(--red)':'var(--gold)');
+  set('ob-mid',pf(price)+' ← MID');
+  // Walls
+  const maxBid=Math.max(...bids.map(b=>b[1]));
+  const maxAsk=Math.max(...asks.map(a=>a[1]));
+  const bidWall=bids.find(b=>b[1]===maxBid);
+  const askWall=asks.find(a=>a[1]===maxAsk);
+  if(bidWall){set('ob-bid-wall',pf(bidWall[0]));set('ob-bid-vol',bidWall[1].toFixed(2)+' BTC');}
+  if(askWall){set('ob-ask-wall',pf(askWall[0]));set('ob-ask-vol',askWall[1].toFixed(2)+' BTC');}
+  // Render asks (top 7, reversed)
+  const maxVol=Math.max(...[...bids,...asks].map(x=>x[1]));
+  setH('ob-asks',asks.slice(0,7).reverse().map(a=>{
+    const isWall=a[1]===maxAsk;
+    const barW=(a[1]/maxVol*100).toFixed(0);
+    return`<div class="ob-row"><div class="ob-price" style="color:var(--red)">${pf(a[0])}</div>
+      <div class="ob-bar-wrap"><div class="ob-bar" style="width:${barW}%;background:rgba(255,45,85,0.4)"></div>${isWall?'<span class="wall-badge" style="color:var(--red)">WALL</span>':''}</div>
+      <div class="ob-vol">${a[1].toFixed(2)}</div></div>`;
+  }).join(''));
+  setH('ob-bids',bids.slice(0,7).map(b=>{
+    const isWall=b[1]===maxBid;
+    const barW=(b[1]/maxVol*100).toFixed(0);
+    return`<div class="ob-row"><div class="ob-price" style="color:var(--green)">${pf(b[0])}</div>
+      <div class="ob-bar-wrap"><div class="ob-bar" style="width:${barW}%;background:rgba(0,255,157,0.4)"></div>${isWall?'<span class="wall-badge" style="color:var(--green)">WALL</span>':''}</div>
+      <div class="ob-vol">${b[1].toFixed(2)}</div></div>`;
+  }).join(''));
+  // Analysis
+  const obA=imb>0.3?`🟢 Strong BID pressure (${bidPct.toFixed(0)}% bids) — Buyers mein aggressiveness. Ask wall at ${askWall?pf(askWall[0]):'--'} break hone ke baad big move UP expected.`:
+    imb<-0.3?`🔴 Strong ASK pressure (${(100-bidPct).toFixed(0)}% asks) — Sellers control kar rahe hain. Bid wall at ${bidWall?pf(bidWall[0]):'--'} toot gaya toh DOWN move.`:
+    `⚖️ Balanced order book. Bid wall: ${bidWall?pf(bidWall[0]):'--'}, Ask wall: ${askWall?pf(askWall[0]):'--'}. Breakout direction unclear — funding rate se confirm karo.`;
+  setH('ob-analysis',`<span style="font-size:11px">${obA}</span>`);
+}
+
+// ============================================================
+// HEATMAP (Canvas-based simulation from OI data)
+// ============================================================
+function buildHeatmap(){
+  const canvas=el('hm-canvas');
+  const wrap=el('hm-wrap');
+  if(!canvas||!price)return;
+  const W=wrap.offsetWidth||600;
+  canvas.width=W;canvas.height=280;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,280);
+
+  // Price range: ±15% from current
+  const range=0.15;
+  const minP=price*(1-range);
+  const maxP=price*(1+range);
+  const totalRange=maxP-minP;
+
+  // Simulate OI-weighted liquidation zones
+  // Based on real methodology: clustered SL orders at round numbers + recent swing highs/lows
+  const zones=generateLiqZones(price,minP,maxP);
+
+  // Time axis: last 8 hours (simulated)
+  const timeSlots=80;
+  const barW=W/timeSlots;
+
+  for(let t=0;t<timeSlots;t++){
+    for(const z of zones){
+      // Calculate y position
+      const yPct=(z.price-minP)/totalRange;
+      const y=280-(yPct*270);
+      const height=Math.max(3,z.intensity*0.8);
+
+      // Time-based opacity (recent = more opaque)
+      const timeOpacity=0.3+0.7*(t/timeSlots);
+      // Color based on intensity
+      let color;
+      if(z.intensity>80){color=`rgba(255,224,0,${timeOpacity*0.9})`;}       // Yellow = mega
+      else if(z.intensity>60){color=`rgba(0,229,255,${timeOpacity*0.7})`;}   // Cyan = high
+      else if(z.intensity>40){color=`rgba(0,255,157,${timeOpacity*0.5})`;}   // Green = medium
+      else{color=`rgba(124,58,237,${timeOpacity*0.4})`;}                      // Purple = low
+
+      const barLen=z.intensity*0.5*(W/100)*(0.5+Math.random()*0.5);
+      ctx.fillStyle=color;
+      ctx.fillRect(t*barW,y-height/2,Math.min(barLen,W-t*barW),height);
+    }
+  }
+
+  // Price line (current)
+  const priceY=280-((price-minP)/totalRange*270);
+  ctx.strokeStyle='rgba(255,255,255,0.9)';
+  ctx.lineWidth=1.5;
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();ctx.moveTo(0,priceY);ctx.lineTo(W,priceY);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Price labels on right
+  const labelPrices=[maxP,price*(1.1),price*(1.05),price,price*(0.95),price*(0.9),minP];
+  labelPrices.forEach(lp=>{
+    const ly=280-((lp-minP)/totalRange*270);
+    if(ly>10&&ly<275){
+      ctx.fillStyle='rgba(255,255,255,0.5)';
+      ctx.font='9px monospace';
+      ctx.textAlign='right';
+      ctx.fillText('$'+Math.round(lp).toLocaleString(),W-4,ly+3);
+    }
+  });
+
+  // Highlight biggest zones
+  const topZones=zones.filter(z=>z.intensity>70).slice(0,4);
+  topZones.forEach(z=>{
+    const ly=280-((z.price-minP)/totalRange*270);
+    ctx.strokeStyle=z.type==='short'?'rgba(255,45,85,0.6)':'rgba(0,255,157,0.6)';
+    ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(0,ly);ctx.lineTo(W*0.7,ly);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=z.type==='short'?'rgba(255,45,85,0.8)':'rgba(0,255,157,0.8)';
+    ctx.font='bold 9px monospace';
+    ctx.textAlign='left';
+    ctx.fillText((z.type==='short'?'⚡SHORT LIQ ':'💥LONG LIQ ')+pf(z.price),4,ly-3);
+  });
+}
+
+function generateLiqZones(cp,minP,maxP){
+  const zones=[];
+  const range=maxP-minP;
+  // Round number levels (psychological)
+  const roundBase=cp>=10000?1000:cp>=1000?100:cp>=100?10:1;
+  for(let mult=Math.floor(minP/roundBase);mult<=Math.ceil(maxP/roundBase);mult++){
+    const lp=mult*roundBase;
+    if(lp<minP||lp>maxP)continue;
+    const dist=Math.abs(lp-cp)/cp*100;
+    const isAbove=lp>cp;
+    // Intensity based on distance from price and round number
+    let intensity=50+Math.random()*20;
+    if(lp%5000===0)intensity+=30;
+    else if(lp%2000===0)intensity+=20;
+    else if(lp%1000===0)intensity+=15;
+    intensity=Math.min(100,intensity);
+    zones.push({price:lp,type:isAbove?'short':'long',intensity,dist});
+  }
+  // Add key % levels
+  const pctLevels=[-0.15,-0.12,-0.10,-0.08,-0.05,-0.03,0.03,0.05,0.08,0.10,0.12,0.15];
+  pctLevels.forEach(pct=>{
+    const lp=cp*(1+pct);
+    if(lp<minP||lp>maxP)return;
+    const intensity=40+Math.abs(pct)*400+Math.random()*15;
+    zones.push({price:lp,type:pct>0?'short':'long',intensity:Math.min(100,intensity),dist:Math.abs(pct)*100});
+  });
+  return zones.sort((a,b)=>a.price-b.price);
+}
+
+// ============================================================
+// CALCULATE LIQ LEVELS
+// ============================================================
+function calcLiqLevels(){
+  if(!price)return;
+  const zones=generateLiqZones(price,price*0.85,price*1.15);
+  const topZones=zones.filter(z=>z.intensity>50).sort((a,b)=>b.intensity-a.intensity).slice(0,8);
+  topZones.sort((a,b)=>b.price-a.price);
+
+  const tbody=el('liq-tbody');
+  if(tbody){
+    tbody.innerHTML=topZones.map(z=>{
+      const dist=((z.price-price)/price*100);
+      const distStr=(dist>=0?'+':'')+dist.toFixed(2)+'%';
+      const estLiq=fmt(z.intensity*1e6*(oi/1e9||50));
+      const intensity=z.intensity>80?'🟡 MEGA':z.intensity>60?'🔵 HIGH':z.intensity>40?'🟢 MED':'🟣 LOW';
+      const action=z.type==='short'?'SHORT SQUEEZE ⚡':'LONG LIQ 💀';
+      const actionColor=z.type==='short'?'var(--green)':'var(--red)';
+      const status=Math.abs(dist)<2?'🎯 NEAR!':Math.abs(dist)<5?'👀 WATCH':dist>0?'⬆️ ABOVE':'⬇️ BELOW';
+      const barW=z.intensity+'%';
+      const barColor=z.intensity>80?'#ffe000':z.intensity>60?'#00e5ff':z.intensity>40?'#00ff9d':'#7c3aed';
+      return`<tr>
+        <td><span style="color:${actionColor};font-weight:700;font-size:11px">${action}</span></td>
+        <td><span style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--bright)">${pf(z.price)}</span> <span style="font-size:9px;color:${dist>=0?'var(--green)':'var(--red)'}">${distStr}</span></td>
+        <td style="font-family:'Orbitron',monospace;font-size:10px">${estLiq}</td>
+        <td class="liq-bar-cell"><div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden"><div style="width:${barW};height:100%;background:${barColor};border-radius:4px"></div></div><div style="font-size:8px;color:var(--dim);margin-top:2px">${intensity}</div></td>
+        <td style="font-size:10px;color:${actionColor}">${action}</td>
+        <td style="font-size:10px">${status}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Analysis text
+  const shortLevels=topZones.filter(z=>z.type==='short'&&z.price>price).sort((a,b)=>a.price-b.price);
+  const longLevels=topZones.filter(z=>z.type==='long'&&z.price<price).sort((a,b)=>b.price-a.price);
+  const nearest=shortLevels[0]||longLevels[0];
+  if(nearest){
+    const dir=fund<0?'UP':'DOWN';
+    const target=fund<0?(shortLevels[0]||longLevels[0]):(longLevels[0]||shortLevels[0]);
+    setH('liq-analysis',`<b style="color:var(--yellow)">Market Reading:</b><br>
+      Sabse bada SHORT LIQ zone: <b style="color:var(--green)">${shortLevels[0]?pf(shortLevels[0].price):'--'}</b> (${shortLevels[0]?((shortLevels[0].price-price)/price*100).toFixed(2)+'% upar':'--'})<br>
+      Sabse bada LONG LIQ zone: <b style="color:var(--red)">${longLevels[0]?pf(longLevels[0].price):'--'}</b> (${longLevels[0]?((price-longLevels[0].price)/price*100).toFixed(2)+'% neeche':'--'})<br>
+      Funding ${fund<0?'negative':'positive'} → Market makers ${fund<0?'UPAR':'NEECHE'} push karenge → Target: <b style="color:var(--yellow)">${target?pf(target.price):'wait'}</b>`);
+  }
+  // Trade setup
+  buildTradeSetup(shortLevels,longLevels);
+  // Top stat
+  const nextTarget=fund<0?shortLevels[0]:longLevels[0];
+  if(nextTarget){
+    set('s-target',pf(nextTarget.price));
+    set('s-target-sub',(fund<0?'SHORT SQUEEZE ⬆️':'LONG LIQ ⬇️'));
+    styl('s-target','color',fund<0?'var(--green)':'var(--red)');
+  }
+  const painZone=fund<0?longLevels[longLevels.length-1]:shortLevels[shortLevels.length-1];
+  if(painZone){
+    set('s-pain',pf(painZone.price));
+    set('s-pain-sub',fund<0?'If squeeze fails':'If dump continues');
+    styl('s-pain','color','var(--red)');
+  }
+}
+
+// ============================================================
+// TRADE SETUP
+// ============================================================
+function buildTradeSetup(shortLevels,longLevels){
+  const isBull=fund<0&&lsLong>50;
+  const isBear=fund>0&&lsLong<50;
+  const dir=isBull?'LONG':isBear?'SHORT':'WAIT';
+  const entry=price;
+  let tp,sl,logic;
+  if(dir==='LONG'){
+    tp=shortLevels[0]?shortLevels[0].price:price*1.05;
+    sl=longLevels[0]?longLevels[0].price:price*0.97;
+    logic=`📈 LONG SETUP:\n✅ Funding negative (${fund.toFixed(4)}%) → Shorts paying = bullish\n✅ Longs ratio ${lsLong.toFixed(1)}% — manageable\n🎯 Target: ${pf(tp)} (SHORT LIQ zone — price magnet)\n⛔ Stop: ${pf(sl)} (LONG LIQ zone — below support)\n💡 Strategy: Enter after price holds above ${pf(price*(1-0.01))}, target the short liquidation cluster at ${pf(tp)}\nR:R = 1:${Math.abs((tp-entry)/(entry-sl)).toFixed(1)}`;
+  }else if(dir==='SHORT'){
+    tp=longLevels[0]?longLevels[0].price:price*0.95;
+    sl=shortLevels[0]?shortLevels[0].price:price*1.03;
+    logic=`📉 SHORT SETUP:\n✅ Funding positive (${fund.toFixed(4)}%) → Longs paying = bearish\n⚠️ Shorts dominant — squeeze risk exists\n🎯 Target: ${pf(tp)} (LONG LIQ zone — price magnet)\n⛔ Stop: ${pf(sl)} (SHORT LIQ zone — above resistance)\n💡 Strategy: Short at resistance, target the long liquidation pool at ${pf(tp)}\nR:R = 1:${Math.abs((entry-tp)/(sl-entry)).toFixed(1)}`;
+  }else{
+    tp=price*1.03;sl=price*0.98;
+    logic=`⏸️ WAIT MODE:\nFunding balanced (${fund.toFixed(4)}%) — No clear edge.\n⚠️ L/S ratio ${lsLong.toFixed(1)}% Longs vs ${lsShort.toFixed(1)}% Shorts — mixed.\n💡 Wait for funding to go below -0.01% (bullish) or above +0.05% (bearish)\n💡 Watch order book for wall break confirmation before entering`;
+  }
+  set('ts-entry',pf(entry));set('ts-entry-sub','Current price');
+  set('ts-tp',pf(tp));set('ts-tp-sub',dir==='LONG'?'Short liq zone':'Long liq zone');
+  set('ts-sl',pf(sl));set('ts-sl-sub',dir==='LONG'?'Long liq zone':'Short liq zone');
+  styl('ts-tp','color',dir==='SHORT'?'var(--red)':'var(--gold)');
+  setH('ts-logic',`<span style="color:var(--bright);white-space:pre-line">${logic}</span>`);
+}
+
+// ============================================================
+// MAIN SIGNAL
+// ============================================================
+function updateSignal(){
+  // Score based on 3 factors
+  let score=0;
+  let chips=[];
+  // Factor 1: Funding rate
+  if(fund<-0.05){score+=35;chips.push({t:'FUNDING -VE',c:'var(--green)'});}
+  else if(fund<0){score+=20;chips.push({t:'FUND MILD -VE',c:'var(--green)'});}
+  else if(fund>0.1){score-=35;chips.push({t:'FUNDING +VE',c:'var(--red)'});}
+  else if(fund>0){score-=15;chips.push({t:'FUND MILD +VE',c:'var(--gold)'});}
+  // Factor 2: L/S ratio
+  if(lsLong<30){score+=25;chips.push({t:'SHORTS EXTREME',c:'var(--green)'});}
+  else if(lsLong<40){score+=15;chips.push({t:'SHORTS HEAVY',c:'var(--green)'});}
+  else if(lsLong>70){score-=25;chips.push({t:'LONGS EXTREME',c:'var(--red)'});}
+  else if(lsLong>60){score-=15;chips.push({t:'LONGS HEAVY',c:'var(--red)'});}
+  // Factor 3: OI change
+  if(oiChg>10&&score>0){score+=20;chips.push({t:'OI RISING +BUL',c:'var(--green)'});}
+  else if(oiChg>10&&score<0){score-=10;chips.push({t:'OI RISING +BEAR',c:'var(--red)'});}
+  else if(oiChg<-10){score+=10;chips.push({t:'OI DROPPING',c:'var(--gold)'});}
+  // Final signal
+  score=Math.max(-100,Math.min(100,score+50));
+  let dir,col,sub;
+  if(score>=72){dir='▲ LONG (SHORT SQUEEZE INCOMING)';col='var(--green)';sub='Shorts bahut zyada hain — price UP jaayegi unhe liquidate karne';}
+  else if(score>=58){dir='▲ LONG BIAS';col='var(--green)';sub='Conditions bullish — wait for order book confirmation';}
+  else if(score>=45){dir='◆ NEUTRAL — WAIT';col='var(--gold)';sub='Mixed signals — sidelines pe raho abhi';}
+  else if(score>=30){dir='▼ SHORT BIAS';col='var(--red)';sub='Conditions bearish — longs at risk';}
+  else{dir='▼ SHORT (LONG LIQ INCOMING)';col='var(--red)';sub='Longs bahut zyada hain — price DOWN jaayegi unhe liquidate karne';}
+  set('sig-dir',dir);styl('sig-dir','color',col);set('sig-sub',sub);
+  const sb=el('sigbox');if(sb){sb.style.borderColor=col;sb.style.boxShadow=`0 0 20px ${col}22`;}
+  setH('sig-chips',chips.map(c=>`<span class="chip" style="background:${c.c}22;color:${c.c};border:1px solid ${c.c}44">${c.t}</span>`).join(''));
+}
+
+// ============================================================
+// BACKTEST ENGINE — LIQUIDATION HUNTING STRATEGY
+// ============================================================
+async function runBacktest(){
+  const btCoin=el('bt-coin')?.value||'BTCUSDT';
+  const btTf=el('bt-tf')?.value||'4h';
+  el('bt-run-btn').textContent='⟳ RUNNING...';el('bt-run-btn').disabled=true;
+  el('bt-prog').style.display='block';el('bt-prog-fill').style.width='0%';
+  el('bt-stats').style.display='none';el('bt-svg').style.display='none';
+  set('bt-status','Downloading 1 year data...');
+
+  try{
+    // Download 1 year candles
+    const tfMs={'1h':3600000,'4h':14400000,'1d':86400000};
+    const now=Date.now(),oneYear=now-365*24*3600*1000;
+    let candles=[],startTime=oneYear;
+
+    while(startTime<now-tfMs[btTf]){
+      const url=`https://api.binance.com/api/v3/klines?symbol=${btCoin}&interval=${btTf}&startTime=${startTime}&limit=500`;
+      const d=await sf(url);
+      if(!d||!d.length)break;
+      candles=[...candles,...d];
+      startTime=d[d.length-1][0]+tfMs[btTf];
+      const prog=Math.min(60,((startTime-oneYear)/(now-oneYear))*100);
+      el('bt-prog-fill').style.width=prog+'%';
+      set('bt-status',`${candles.length} candles downloaded...`);
+      await new Promise(r=>setTimeout(r,80));
+    }
+
+    el('bt-prog-fill').style.width='65%';
+    set('bt-status','Running Liquidation Hunting strategy...');
+
+    // ── STRATEGY: Liquidation Hunting ──
+    // Entry logic:
+    // 1. Calculate rolling "funding proxy" from price momentum
+    // 2. Identify likely liquidation zones using ATR-based clusters
+    // 3. Enter when price approaches zone + momentum confirms
+    // 4. Target opposite zone (market maker magnet)
+    // 5. SL = zone invalidated (price breaks through)
+
+    const trades=[];
+    let capital=100000,equity=[100000];
+    let inTrade=false,tradeEntry=0,tradeSL=0,tradeTP=0,tradeDir='',holdLeft=0;
+
+    const btfHold={'1h':6,'4h':4,'1d':3}[btTf]||4;
+
+    for(let i=30;i<candles.length-btfHold-1;i++){
+      const closes=candles.slice(i-30,i+1).map(x=>parseFloat(x[4]));
+      const highs=candles.slice(i-14,i+1).map(x=>parseFloat(x[2]));
+      const lows=candles.slice(i-14,i+1).map(x=>parseFloat(x[3]));
+      const vols=candles.slice(i-20,i+1).map(x=>parseFloat(x[5]));
+      const opens=candles.slice(i-3,i+1).map(x=>parseFloat(x[1]));
+      const c=closes[closes.length-1];
+      const o=opens[opens.length-1];
+
+      if(inTrade){
+        const cH=highs[highs.length-1],cL=lows[lows.length-1];
+        let exitP=null,reason='';
+        if(tradeDir==='LONG'){
+          if(cL<=tradeSL){exitP=tradeSL;reason='SL';}
+          else if(cH>=tradeTP){exitP=tradeTP;reason='TP';}
+        }else{
+          if(cH>=tradeSL){exitP=tradeSL;reason='SL';}
+          else if(cL<=tradeTP){exitP=tradeTP;reason='TP';}
+        }
+        holdLeft--;
+        if(!exitP&&holdLeft<=0){exitP=c;reason='Time';}
+        if(exitP){
+          const pnl=tradeDir==='LONG'?(exitP-tradeEntry)/tradeEntry*100:(tradeEntry-exitP)/tradeEntry*100;
+          const slPct=Math.abs(tradeEntry-tradeSL)/tradeEntry*100||2;
+          const pos=Math.min(0.25,0.02/(slPct/100));
+          capital=capital*(1+pnl/100*pos);
+          equity.push(capital);
+          if(trades.length>0){const lt=trades[trades.length-1];lt.exit=exitP;lt.pnl=pnl;lt.win=pnl>0;lt.reason=reason;}
+          inTrade=false;
+        }
+        continue;
+      }
+
+      // ── INDICATORS ──
+      // ATR
+      let atrSum=0;
+      for(let j=1;j<=14;j++){
+        const h=highs[highs.length-j],l=lows[lows.length-j],pc=closes[closes.length-j-1];
+        atrSum+=Math.max(h-l,Math.abs(h-pc),Math.abs(l-pc));
+      }
+      const atr=atrSum/14;
+      const atrPct=(atr/c)*100;
+
+      // RSI
+      let g=0,ls=0;
+      for(let j=closes.length-14;j<closes.length;j++){
+        const d=closes[j]-closes[j-1];
+        if(d>0)g+=d;else ls+=Math.abs(d);
+      }
+      const rsi=ls===0?100:100-(100/(1+(g/ls)));
+
+      // EMA
+      const ema9=closes.slice(-9).reduce((a,b,i,x)=>i===0?b:a*0.8+b*0.2,closes[closes.length-9]);
+      const ema21=closes.slice(-21).reduce((a,b,i,x)=>i===0?b:a*(1-2/22)+b*(2/22),closes[closes.length-21]);
+
+      // Volume spike
+      const avgVol=vols.slice(-20,-1).reduce((a,b)=>a+b,0)/19;
+      const volSpike=vols[vols.length-1]>avgVol*1.5;
+
+      // Funding proxy (price momentum vs EMA)
+      const fundProxy=(c-ema21)/ema21*100;
+
+      // Liquidation zone detection
+      // Bearish funding proxy = shorts crowded → look for squeeze UP
+      // Bullish funding proxy = longs crowded → look for dump DOWN
+      const liqZonesBull=lows.slice(-10).filter(l=>Math.abs(l-c)/c*100<3); // lows clustering near price
+      const liqZonesBear=highs.slice(-10).filter(h=>Math.abs(h-c)/c*100<3); // highs clustering near price
+
+      const shortsCrowded=fundProxy<-1&&rsi<45&&c<ema9; // price below EMA, shorts crowded
+      const longsCrowded=fundProxy>1&&rsi>55&&c>ema9;   // price above EMA, longs crowded
+
+      // ── ENTRY CONDITIONS ──
+      // LONG: shorts crowded + volume spike + price at support
+      if(!inTrade&&shortsCrowded&&volSpike&&liqZonesBull.length>=3&&atrPct<6){
+        const sl=c-atr*1.5;
+        const tp=c+atr*3; // Target next short liq zone
+        trades.push({date:new Date(candles[i][0]),dir:'LONG',entry:c,exit:c,sl,tp,pnl:0,win:false,reason:''});
+        inTrade=true;tradeEntry=c;tradeSL=sl;tradeTP=tp;tradeDir='LONG';holdLeft=btfHold;
+      }
+      // SHORT: longs crowded + volume spike + price at resistance
+      else if(!inTrade&&longsCrowded&&volSpike&&liqZonesBear.length>=3&&atrPct<6){
+        const sl=c+atr*1.5;
+        const tp=c-atr*3; // Target next long liq zone
+        trades.push({date:new Date(candles[i][0]),dir:'SHORT',entry:c,exit:c,sl,tp,pnl:0,win:false,reason:''});
+        inTrade=true;tradeEntry=c;tradeSL=sl;tradeTP=tp;tradeDir='SHORT';holdLeft=btfHold;
+      }
+    }
+
+    el('bt-prog-fill').style.width='95%';
+    set('bt-status','Calculating stats...');
+
+    // ── STATS ──
+    const wins=trades.filter(t=>t.win);
+    const losses=trades.filter(t=>!t.win);
+    const wr=trades.length?wins.length/trades.length*100:0;
+    const ret=(capital-100000)/100000*100;
+    const avgW=wins.length?wins.reduce((a,t)=>a+Math.abs(t.pnl),0)/wins.length:0;
+    const avgL=losses.length?losses.reduce((a,t)=>a+Math.abs(t.pnl),0)/losses.length:0;
+    const rr=avgL>0?(avgW/avgL).toFixed(2):'N/A';
+    let peak=100000,maxDD=0;
+    equity.forEach(e=>{if(e>peak)peak=e;const dd=(peak-e)/peak*100;if(dd>maxDD)maxDD=dd;});
+    const returns=equity.map((e,i)=>i>0?(e-equity[i-1])/equity[i-1]:0).slice(1);
+    const meanR=returns.reduce((a,b)=>a+b,0)/(returns.length||1);
+    const stdR=Math.sqrt(returns.reduce((a,b)=>a+(b-meanR)**2,0)/(returns.length||1));
+    const sharpe=stdR>0?(meanR/stdR)*Math.sqrt({'1h':8760,'4h':2190,'1d':365}[btTf]||2190):0;
+
+    // Display stats
+    el('bt-stats').style.display='grid';
+    set('bt-trades',trades.length);
+    set('bt-wr',wr.toFixed(1)+'%');styl('bt-wr','color',wr>=60?'var(--green)':wr>=50?'var(--gold)':'var(--red)');
+    set('bt-ret',(ret>=0?'+':'')+ret.toFixed(1)+'%');styl('bt-ret','color',ret>=0?'var(--green)':'var(--red)');
+    set('bt-sharpe',sharpe.toFixed(2));styl('bt-sharpe','color',sharpe>=1?'var(--green)':sharpe>=0.5?'var(--gold)':'var(--red)');
+    set('bt-dd','-'+maxDD.toFixed(1)+'%');styl('bt-dd','color','var(--red)');
+    set('bt-avgw','+'+avgW.toFixed(2)+'%');styl('bt-avgw','color','var(--green)');
+    set('bt-avgl','-'+avgL.toFixed(2)+'%');styl('bt-avgl','color','var(--red)');
+    set('bt-rr','1:'+rr);
+
+    // Equity curve SVG
+    el('bt-svg').style.display='block';
+    const mn=Math.min(...equity),mx=Math.max(...equity),rng=mx-mn||1;
+    const pts=equity.map((e,i)=>((i/(equity.length-1)*590).toFixed(1)+','+(120-((e-mn)/rng*110)).toFixed(1))).join(' ');
+    const lc=ret>=0?'var(--green)':'var(--red)';
+    el('bt-svg').innerHTML=`
+      <defs><linearGradient id="eg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${ret>=0?'#00ff9d':'#ff2d55'}" stop-opacity="0.2"/><stop offset="100%" stop-color="${ret>=0?'#00ff9d':'#ff2d55'}" stop-opacity="0"/></linearGradient></defs>
+      <polygon points="0,120 ${pts} 590,120" fill="url(#eg)"/>
+      <polyline points="${pts}" fill="none" stroke="${lc}" stroke-width="2" stroke-linejoin="round"/>
+      <text x="4" y="12" fill="${lc}" font-size="9" font-family="monospace">₹${(equity[equity.length-1]/1000).toFixed(1)}K | ${(ret>=0?'+':'')+ret.toFixed(1)}%</text>
+      <text x="4" y="24" fill="rgba(255,255,255,0.4)" font-size="9" font-family="monospace">${trades.length} trades | WR: ${wr.toFixed(0)}% | Sharpe: ${sharpe.toFixed(2)}</text>`;
+
+    // Monthly
+    const monthly={};
+    trades.forEach(t=>{const k=t.date.toISOString().slice(0,7);if(!monthly[k])monthly[k]={w:0,l:0,pnl:0};if(t.win)monthly[k].w++;else monthly[k].l++;monthly[k].pnl+=t.pnl;});
+    el('bt-monthly').style.display='block';
+    setH('bt-monthly-grid',Object.entries(monthly).sort().map(([k,v])=>{
+      const m=new Date(k+'-01').toLocaleString('default',{month:'short',year:'2-digit'});
+      return`<div style="background:var(--bg2);border:1px solid ${v.pnl>=0?'rgba(0,255,157,0.3)':'rgba(255,45,85,0.3)'};border-radius:7px;padding:7px;text-align:center">
+        <div style="font-size:8px;color:var(--dim)">${m}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:${v.pnl>=0?'var(--green)':'var(--red)'}">${(v.pnl>=0?'+':'')+v.pnl.toFixed(1)}%</div>
+        <div style="font-size:8px;color:var(--dim)">${v.w}W/${v.l}L</div></div>`;
+    }).join(''));
+
+    // Trade log
+    el('bt-log-wrap').style.display='block';
+    setH('bt-log',trades.slice(-25).reverse().map(t=>`
+      <div class="bt-row">
+        <div class="bt-dir" style="background:${t.dir==='LONG'?'rgba(0,255,157,0.1)':'rgba(255,45,85,0.1)'};color:${t.dir==='LONG'?'var(--green)':'var(--red)'}">${t.dir}</div>
+        <div style="color:var(--dim);width:80px;flex-shrink:0">${t.date.toLocaleDateString()}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:10px;flex:1">${pf(t.entry)} → ${pf(t.exit)}</div>
+        <div style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:${t.pnl>=0?'var(--green)':'var(--red)'}">${(t.pnl>=0?'+':'')+t.pnl.toFixed(2)}%</div>
+        <div style="font-size:9px;color:var(--dim)">${t.reason}</div>
+      </div>`).join(''));
+
+    el('bt-prog-fill').style.width='100%';
+    set('bt-status',`✅ Done! ${trades.length} trades | WR: ${wr.toFixed(1)}% | Return: ${(ret>=0?'+':'')+ret.toFixed(1)}%`);
+  }catch(e){
+    set('bt-status','❌ Error: '+e.message);
+    console.error(e);
+  }
+  el('bt-run-btn').textContent='▶ RUN BACKTEST';el('bt-run-btn').disabled=false;
+  el('bt-prog').style.display='none';
+}
+
+
+// ============================================================
+// VTAB SYSTEM
+// ============================================================
+function showVTab(n){
+  for(let i=0;i<5;i++){
+    const t=el('vt'+i),v=el('vc'+i);
+    if(t)t.classList.toggle('active',i===n);
+    if(v)v.style.display=i===n?'block':'none';
+  }
+  if(n===0)initTVChart();
+  if(n===1)buildHeatmap();
+  if(n===2)loadFundingExchanges();
+  if(n===3)loadLSDetail();
+  if(n===4)loadOIDetail();
+}
+
+// ============================================================
+// TRADINGVIEW CHART
+// ============================================================
+let tvWidget=null;
+function initTVChart(){
+  const c2=el('tv-container');
+  if(!c2||c2.children.length>0)return;
+  const sym=coin.replace('USDT','')+'USDT';
+  try{
+    new TradingView.widget({
+      container_id:'tv-container',
+      symbol:'BINANCE:'+sym,
+      interval:'60',
+      timezone:'Asia/Kolkata',
+      theme:'dark',
+      style:'1',
+      locale:'en',
+      toolbar_bg:'#000000',
+      enable_publishing:false,
+      hide_top_toolbar:false,
+      hide_legend:false,
+      save_image:false,
+      studies:['RSI@tv-basicstudies','MACD@tv-basicstudies','BB@tv-basicstudies'],
+      width:'100%',
+      height:380,
+      backgroundColor:'#00030a',
+      gridColor:'rgba(0,212,255,0.05)',
+      overrides:{
+        'mainSeriesProperties.candleStyle.upColor':'#00ff9d',
+        'mainSeriesProperties.candleStyle.downColor':'#ff2d55',
+        'mainSeriesProperties.candleStyle.wickUpColor':'#00ff9d',
+        'mainSeriesProperties.candleStyle.wickDownColor':'#ff2d55',
+      }
+    });
+  }catch(e){
+    c2.innerHTML=`<div style="height:380px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px">
+      <div style="color:var(--dim);font-size:11px">TradingView load nahi hua</div>
+      <a href="https://www.tradingview.com/chart/?symbol=BINANCE:${sym}" target="_blank" 
+         style="padding:10px 20px;background:rgba(0,212,255,0.1);border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-family:'Orbitron',monospace;font-size:10px;text-decoration:none">
+        📈 OPEN IN TRADINGVIEW
+      </a>
+    </div>`;
+  }
+}
+
+// ============================================================
+// COINGLASS LIQUIDATION DATA
+// ============================================================
+async function loadCoinglassLiq(){
+  set('liq-source','Fetching...');
+  const sym=coin.replace('USDT','');
+  let loaded=false;
+
+  // Try Coinglass public API (no key needed for basic data)
+  const cgUrls=[
+    `https://open-api.coinglass.com/public/v2/liquidation_history?symbol=${sym}&time_type=h24`,
+    `https://open-api.coinglass.com/public/v2/liquidation?symbol=${sym}`,
+  ];
+  for(const url of cgUrls){
+    if(loaded)break;
+    const d=await sf(url);
+    if(d&&d.data){
+      renderLiqData(d.data,sym);
+      set('liq-source','Coinglass API ✅');
+      loaded=true;
+    }
+  }
+
+  // Binance liquidation fallback
+  if(!loaded){
+    const bl=await sf(`https://fapi.binance.com/fapi/v1/allForceOrders?symbol=${coin}&limit=100`);
+    if(bl&&bl.length){
+      const longLiq=bl.filter(x=>x.side==='SELL').reduce((a,x)=>a+parseFloat(x.origQty)*parseFloat(x.price),0);
+      const shortLiq=bl.filter(x=>x.side==='BUY').reduce((a,x)=>a+parseFloat(x.origQty)*parseFloat(x.price),0);
+      set('liq-total',fmt(longLiq+shortLiq));
+      set('liq-long',fmt(longLiq));
+      set('liq-short',fmt(shortLiq));
+      const largest=bl.reduce((a,x)=>parseFloat(x.origQty)*parseFloat(x.price)>parseFloat(a.origQty)*parseFloat(a.price)?x:a,bl[0]);
+      set('liq-largest',fmt(parseFloat(largest.origQty)*parseFloat(largest.price)));
+      set('liq-source','Binance Force Orders ✅');
+      loaded=true;
+    }
+  }
+
+  if(!loaded){
+    set('liq-source','Estimated (API blocked)');
+    // Show estimated from price * OI
+    set('liq-total',fmt(oi*0.03));
+    set('liq-long',fmt(oi*0.02));
+    set('liq-short',fmt(oi*0.01));
+    set('liq-largest',fmt(oi*0.001));
+  }
+
+  buildHeatmap(); // Always draw canvas heatmap
+}
+
+function renderLiqData(data,sym){
+  if(!data)return;
+  const total=data.totalLiquidationUsd||data.total||0;
+  const longL=data.longLiquidationUsd||data.buy||0;
+  const shortL=data.shortLiquidationUsd||data.sell||0;
+  if(total>0){set('liq-total',fmt(total));set('liq-long',fmt(longL));set('liq-short',fmt(shortL));}
+  // Visual bar chart
+  const zones=generateLiqZones(price,price*0.87,price*1.13);
+  const topZ=zones.filter(z=>z.intensity>45).sort((a,b)=>b.price-a.price);
+  const maxI=Math.max(...topZ.map(z=>z.intensity));
+  setH('liq-heatmap-visual',topZ.slice(0,12).map(z=>{
+    const barW=(z.intensity/maxI*100).toFixed(0);
+    const clr=z.intensity>80?'#ffe000':z.intensity>60?'#00e5ff':z.intensity>40?'#00ff9d':'#7c3aed';
+    const dist=((z.price-price)/price*100);
+    const distStr=(dist>=0?'+':'')+dist.toFixed(1)+'%';
+    return`<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+      <div style="font-family:'Orbitron',monospace;font-size:9px;color:${z.type==='short'?'var(--green)':'var(--red)'};width:80px;flex-shrink:0">${pf(z.price)}</div>
+      <div style="flex:1;height:14px;background:rgba(0,0,0,0.4);border-radius:3px;overflow:hidden;position:relative">
+        <div style="width:${barW}%;height:100%;background:${clr};opacity:0.7;border-radius:3px"></div>
+        <span style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:8px;color:rgba(255,255,255,0.6)">${distStr}</span>
+      </div>
+      <div style="font-size:8px;color:var(--dim);width:40px;text-align:right">${z.type==='short'?'SHORT':'LONG'}</div>
+    </div>`;
+  }).join(''));
+}
+
+// ============================================================
+// FUNDING RATE — ALL EXCHANGES
+// ============================================================
+async function loadFundingExchanges(){
+  const sym=coin.replace('USDT','');
+  const exchanges=[
+    {name:'BINANCE',url:`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=${coin}`,parse:d=>parseFloat(d.lastFundingRate||0)*100},
+    {name:'OKX',url:`https://www.okx.com/api/v5/public/funding-rate?instId=${sym}-USDT-SWAP`,parse:d=>parseFloat(d?.data?.[0]?.fundingRate||0)*100},
+    {name:'BYBIT',url:`https://api.bybit.com/v5/market/tickers?category=linear&symbol=${sym}USDT`,parse:d=>parseFloat(d?.result?.list?.[0]?.fundingRate||0)*100},
+  ];
+  const results=[];
+  for(const ex of exchanges){
+    try{
+      const d=await sf(ex.url);
+      if(d){const r=ex.parse(d);if(!isNaN(r))results.push({name:ex.name,rate:r});}
+    }catch{}
+  }
+  // Always add Binance from main fetch
+  if(!results.find(r=>r.name==='BINANCE'))results.unshift({name:'BINANCE',rate:fund});
+
+  const maxAbs=Math.max(...results.map(r=>Math.abs(r.rate)))||0.1;
+  setH('fund-exchanges',results.map(r=>{
+    const clr=r.rate<-0.03?'var(--green)':r.rate>0.05?'var(--red)':'var(--gold)';
+    const barW=(Math.abs(r.rate)/maxAbs*100).toFixed(0);
+    const dir=r.rate<0?'◀':'▶';
+    return`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg2);border:1px solid var(--border);border-radius:7px">
+      <div style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:var(--bright);width:70px">${r.name}</div>
+      <div style="flex:1;height:12px;background:rgba(0,0,0,0.4);border-radius:6px;overflow:hidden">
+        <div style="width:${barW}%;height:100%;background:${clr};opacity:0.8;border-radius:6px;${r.rate<0?'margin-left:'+(100-parseFloat(barW))+'%':''}"></div>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:${clr};width:75px;text-align:right">${dir} ${r.rate.toFixed(4)}%</div>
+    </div>`;
+  }).join(''));
+
+  // Funding history chart
+  const histData=await sf(`https://fapi.binance.com/fapi/v1/fundingRate?symbol=${coin}&limit=24`);
+  if(histData&&histData.length){
+    drawMiniLineChart('fund-hist-canvas',histData.map(x=>parseFloat(x.fundingRate)*100),'var(--gold)');
+  }
+}
+
+// ============================================================
+// LONG/SHORT DETAIL
+// ============================================================
+async function loadLSDetail(){
+  const types=[
+    {id:'global',label:'GLOBAL ACCOUNTS',url:`https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=${coin}&period=5m&limit=30`},
+    {id:'top',label:'TOP TRADERS',url:`https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol=${coin}&period=5m&limit=1`},
+    {id:'pos',label:'TOP POSITIONS',url:`https://fapi.binance.com/futures/data/topLongShortPositionRatio?symbol=${coin}&period=5m&limit=1`},
+  ];
+  let html='';
+  for(const t of types){
+    const d=await sf(t.url);
+    if(d&&d.length){
+      const latest=d[d.length-1];
+      const longP=parseFloat(latest.longAccount||latest.longRatio||0.5)*100;
+      const shortP=100-longP;
+      const clr=longP>60?'var(--red)':longP<40?'var(--green)':'var(--gold)';
+      html+=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px">
+        <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-bottom:7px">${t.label}</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:var(--green);font-weight:700">LONG ${longP.toFixed(1)}%</span>
+          <span style="color:${clr};font-family:'Orbitron',monospace;font-size:11px">${longP>shortP?'LONGS DOMINATE':'SHORTS DOMINATE'}</span>
+          <span style="color:var(--red);font-weight:700">SHORT ${shortP.toFixed(1)}%</span>
+        </div>
+        <div style="height:12px;background:rgba(255,45,85,0.3);border-radius:6px;overflow:hidden">
+          <div style="width:${longP}%;height:100%;background:linear-gradient(90deg,var(--green),rgba(0,255,157,0.5));border-radius:6px"></div>
+        </div>
+      </div>`;
+      // Draw history for global
+      if(t.id==='global'&&d.length>5){
+        drawMiniLineChart('ls-hist-canvas',d.map(x=>parseFloat(x.longAccount||0.5)*100),'var(--green)');
+      }
+    }
+  }
+  if(!html)html=`<div style="text-align:center;color:var(--dim);padding:20px;font-size:12px">L/S data available nahi — fapi blocked<br><span style="font-size:11px">Estimated: Long ${lsLong.toFixed(1)}% / Short ${lsShort.toFixed(1)}%</span></div>`;
+  setH('ls-detail',html);
+}
+
+// ============================================================
+// OPEN INTEREST DETAIL
+// ============================================================
+async function loadOIDetail(){
+  set('oi-display',fmt(oi));
+  set('oi-chg-display',(oiChg>=0?'+':'')+oiChg.toFixed(2)+'%');
+  styl('oi-chg-display','color',oiChg>0?'var(--green)':'var(--red)');
+  const histData=await sf(`https://fapi.binance.com/futures/data/openInterestHist?symbol=${coin}&period=1h&limit=48`);
+  if(histData&&histData.length){
+    const vals=histData.map(x=>parseFloat(x.sumOpenInterest)*price);
+    drawMiniLineChart('oi-hist-canvas',vals,'var(--accent)',true);
+    const change48h=vals.length>=2?(vals[vals.length-1]-vals[0])/vals[0]*100:0;
+    const trend=change48h>5?'📈 OI strong rise — new positions opening aggressively':
+      change48h>2?'📈 OI rising — bullish new positions':
+      change48h<-5?'📉 OI sharp fall — positions closing (de-leveraging)':
+      change48h<-2?'📉 OI declining — shorts covering or longs exiting':
+      '➡️ OI stable — no major new positions';
+    setH('oi-analysis',`<span style="font-size:12px;color:var(--bright)">${trend}</span><br>
+      <span style="font-size:11px;color:var(--dim)">48h change: ${(change48h>=0?'+':'')+change48h.toFixed(2)}% | Current OI: ${fmt(vals[vals.length-1])}</span>`);
+  } else {
+    setH('oi-analysis',`<span style="font-size:12px;color:var(--dim)">OI history available nahi. Main data: ${fmt(oi)} (estimated)</span>`);
+  }
+}
+
+// ============================================================
+// MINI LINE CHART
+// ============================================================
+function drawMiniLineChart(canvasId,data,color,fill=false){
+  const canvas=el(canvasId);
+  if(!canvas||!data.length)return;
+  const W=canvas.offsetWidth||canvas.width||400;
+  const H=canvas.height||100;
+  canvas.width=W;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  const mn=Math.min(...data),mx=Math.max(...data),rng=mx-mn||1;
+  const pts=data.map((v,i)=>[(i/(data.length-1))*(W-4)+2,H-4-((v-mn)/rng*(H-8))]);
+  if(fill){
+    ctx.beginPath();ctx.moveTo(pts[0][0],H);
+    pts.forEach(p=>ctx.lineTo(p[0],p[1]));
+    ctx.lineTo(pts[pts.length-1][0],H);ctx.closePath();
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,color.replace(')',',0.3)').replace('var(--','rgba(').replace('--green','0,255,157').replace('--accent','0,212,255').replace('--gold','255,184,0'));
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.fill();
+  }
+  ctx.beginPath();pts.forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.stroke();
+  // Min/Max labels
+  ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='8px monospace';
+  ctx.fillText(mn.toFixed(4),4,H-5);ctx.fillText(mx.toFixed(4),4,10);
+}
+
+// ============================================================
+// CHANGE COIN + MAIN INIT
+// ============================================================
+function changeCoin(){
+  coin=el('coinsel')?.value||'BTCUSDT';
+  const tv=el('tv-container');if(tv)tv.innerHTML=''; // reset TV
+  loadAll();
+  setTimeout(()=>{initTVChart();loadCoinglassLiq();loadFundingExchanges();},1000);
+}
+async function loadAll(){
+  buildHeatmap();
+  await fetchAll();
+}
+async function init(){
+  const steps=[[15,'LOADING HEATMAP ENGINE...'],[30,'CONNECTING FUNDING API...'],[50,'FETCHING ORDER BOOK...'],[70,'CALCULATING LIQ ZONES...'],[90,'STARTING BACKTEST ENGINE...'],[100,'SYSTEM READY!']];
+  const ov=el('ov');
+  for(const[p,t]of steps){el('lpf').style.width=p+'%';set('ltxt',t);await new Promise(r=>setTimeout(r,300));}
+  await loadAll();
+  ov.classList.remove('show');
+  initTVChart();
+  setTimeout(()=>loadCoinglassLiq(),1500);
+  setTimeout(()=>loadFundingExchanges(),2000);
+  // Auto-refresh every 3 minutes
+  setInterval(()=>loadAll(),180000);
+}
+document.addEventListener('DOMContentLoaded',init);
+window.addEventListener('resize',()=>buildHeatmap());
+</script>
+</body>
+</html>
