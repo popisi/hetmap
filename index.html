@@ -125,6 +125,17 @@ body::after{content:'';position:fixed;inset:0;
 .vtab{padding:10px 14px;background:none;border:none;color:var(--dim);font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px;white-space:nowrap;border-bottom:2px solid transparent;transition:all 0.2s;}
 .vtab:hover{color:var(--text);}
 .vtab.active{color:var(--yellow);border-bottom-color:var(--yellow);}
+
+/* AI PULSE ANIMATION */
+.ai-pulse{width:40px;height:40px;border-radius:50%;background:rgba(0,212,255,0.1);border:2px solid var(--accent);margin:0 auto;animation:aipulse 1.2s ease-in-out infinite;}
+@keyframes aipulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,212,255,0.4);}50%{transform:scale(1.1);box-shadow:0 0 0 12px rgba(0,212,255,0);}}
+/* AI Result text styling */
+.ai-section{margin-bottom:12px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px;border-left:3px solid var(--accent);}
+.ai-section h4{font-family:'Orbitron',monospace;font-size:9px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;}
+.ai-section p{font-size:12px;color:var(--bright);line-height:1.9;}
+.ai-level-buy{display:inline-block;background:rgba(0,255,157,0.15);color:var(--green);border:1px solid rgba(0,255,157,0.4);padding:3px 10px;border-radius:5px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;margin:2px;}
+.ai-level-sell{display:inline-block;background:rgba(255,45,85,0.15);color:var(--red);border:1px solid rgba(255,45,85,0.4);padding:3px 10px;border-radius:5px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;margin:2px;}
+.ai-level-neutral{display:inline-block;background:rgba(255,224,0,0.15);color:var(--yellow);border:1px solid rgba(255,224,0,0.4);padding:3px 10px;border-radius:5px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;margin:2px;}
 </style>
 <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 </head>
@@ -428,6 +439,86 @@ body::after{content:'';position:fixed;inset:0;
       <div class="bt-log" id="bt-log"></div>
     </div>
   </div>
+
+  <!-- AI INTELLIGENCE SECTION -->
+  <div class="card" style="margin-bottom:9px;border-color:rgba(0,212,255,0.4);background:linear-gradient(135deg,rgba(0,6,15,0.98),rgba(0,15,35,0.95));position:relative;overflow:hidden">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 0% 50%,rgba(0,212,255,0.06),transparent 60%),radial-gradient(ellipse at 100% 50%,rgba(255,184,0,0.04),transparent 60%);pointer-events:none"></div>
+    <div style="position:relative">
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div>
+          <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:900;color:var(--accent);letter-spacing:3px">⚡ AI INTELLIGENCE ENGINE</div>
+          <div style="font-size:9px;color:var(--dim);margin-top:2px;letter-spacing:1px">CLAUDE AI — HEATMAP + OB + FUNDING + OI ANALYZER</div>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <button onclick="runAIAnalysis('full')" id="ai-btn-full" style="padding:8px 14px;background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(0,212,255,0.05));border:1px solid var(--accent);color:var(--accent);border-radius:8px;font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px;transition:all 0.2s">🧠 FULL ANALYSIS</button>
+          <button onclick="runAIAnalysis('zones')" id="ai-btn-zones" style="padding:8px 14px;background:linear-gradient(135deg,rgba(255,224,0,0.15),rgba(255,224,0,0.05));border:1px solid var(--yellow);color:var(--yellow);border-radius:8px;font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px">🎯 BUY/SELL ZONES</button>
+          <button onclick="runAIAnalysis('sr')" id="ai-btn-sr" style="padding:8px 14px;background:linear-gradient(135deg,rgba(0,255,157,0.15),rgba(0,255,157,0.05));border:1px solid var(--green);color:var(--green);border-radius:8px;font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px">📊 S/R LEVELS</button>
+          <button onclick="runAIAnalysis('trade')" id="ai-btn-trade" style="padding:8px 14px;background:linear-gradient(135deg,rgba(255,45,85,0.15),rgba(255,45,85,0.05));border:1px solid var(--red);color:var(--red);border-radius:8px;font-family:'Orbitron',monospace;font-size:9px;cursor:pointer;letter-spacing:1px">⚡ TRADE SETUP</button>
+        </div>
+      </div>
+
+      <!-- Quick Stats Row (AI feeds on these) -->
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;padding:10px;background:rgba(0,0,0,0.4);border-radius:8px;border:1px solid var(--border)">
+        <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);width:100%;margin-bottom:4px;letter-spacing:2px">📡 LIVE DATA FEEDING INTO AI:</div>
+        <span class="chip" style="background:rgba(0,212,255,0.1);color:var(--accent);border:1px solid rgba(0,212,255,0.3)" id="ai-chip-price">Price: --</span>
+        <span class="chip" style="background:rgba(255,224,0,0.1);color:var(--yellow);border:1px solid rgba(255,224,0,0.3)" id="ai-chip-fund">Fund: --</span>
+        <span class="chip" style="background:rgba(0,255,157,0.1);color:var(--green);border:1px solid rgba(0,255,157,0.3)" id="ai-chip-ls">L/S: --</span>
+        <span class="chip" style="background:rgba(124,58,237,0.1);color:#a78bfa;border:1px solid rgba(124,58,237,0.3)" id="ai-chip-oi">OI: --</span>
+        <span class="chip" style="background:rgba(255,45,85,0.1);color:var(--red);border:1px solid rgba(255,45,85,0.3)" id="ai-chip-liq">LiqZone: --</span>
+        <span class="chip" style="background:rgba(255,184,0,0.1);color:var(--gold);border:1px solid rgba(255,184,0,0.3)" id="ai-chip-ob">OB: --</span>
+      </div>
+
+      <!-- AI Output Area -->
+      <div id="ai-output" style="min-height:120px;padding:14px;background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:10px;position:relative;overflow:hidden">
+        <div id="ai-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:120px;gap:10px">
+          <div style="font-size:28px">🧠</div>
+          <div style="font-family:'Orbitron',monospace;font-size:10px;color:var(--dim);letter-spacing:2px;text-align:center">AI READY — BUTTON DABAO<br><span style="font-size:8px">Full Analysis / Buy-Sell Zones / S&R / Trade Setup</span></div>
+        </div>
+        <div id="ai-thinking" style="display:none;text-align:center;padding:20px">
+          <div class="ai-pulse"></div>
+          <div style="font-family:'Orbitron',monospace;font-size:9px;color:var(--accent);margin-top:10px;letter-spacing:2px" id="ai-think-txt">ANALYZING MARKET DATA...</div>
+        </div>
+        <div id="ai-result" style="display:none"></div>
+      </div>
+
+      <!-- AI Result Cards (populated after analysis) -->
+      <div id="ai-cards" style="display:none;margin-top:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <!-- Buy Zone -->
+          <div style="background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.3);border-radius:10px;padding:12px">
+            <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--green);margin-bottom:8px;letter-spacing:2px">🟢 BUY ZONES</div>
+            <div id="ai-buy-zones" style="font-size:12px;color:var(--bright);line-height:2"></div>
+          </div>
+          <!-- Sell Zone -->
+          <div style="background:rgba(255,45,85,0.05);border:1px solid rgba(255,45,85,0.3);border-radius:10px;padding:12px">
+            <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--red);margin-bottom:8px;letter-spacing:2px">🔴 SELL ZONES</div>
+            <div id="ai-sell-zones" style="font-size:12px;color:var(--bright);line-height:2"></div>
+          </div>
+        </div>
+        <!-- S/R Levels -->
+        <div style="background:rgba(255,224,0,0.04);border:1px solid rgba(255,224,0,0.25);border-radius:10px;padding:12px;margin-bottom:8px">
+          <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--yellow);margin-bottom:8px;letter-spacing:2px">📊 HEATMAP S/R LEVELS</div>
+          <div id="ai-sr-levels" style="font-size:12px;color:var(--bright);line-height:2"></div>
+        </div>
+        <!-- Trade Setup -->
+        <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:12px">
+          <div style="font-family:'Orbitron',monospace;font-size:8px;color:var(--accent);margin-bottom:8px;letter-spacing:2px">⚡ AI TRADE RECOMMENDATION</div>
+          <div id="ai-trade-rec" style="font-size:12px;color:var(--bright);line-height:2"></div>
+        </div>
+      </div>
+
+      <!-- Auto Analysis toggle -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px;background:rgba(0,0,0,0.3);border-radius:7px">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer">
+          <input type="checkbox" id="ai-auto" onchange="toggleAIAuto()" style="cursor:pointer">
+          <span style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);letter-spacing:1px">AUTO ANALYZE ON DATA REFRESH</span>
+        </label>
+        <span id="ai-last-time" style="font-family:'Orbitron',monospace;font-size:8px;color:var(--dim);margin-left:auto"></span>
+      </div>
+    </div>
+  </div>
+
 
 </div><!-- /wrap -->
 
@@ -879,6 +970,8 @@ function buildTradeSetup(shortLevels,longLevels){
 // MAIN SIGNAL
 // ============================================================
 function updateSignal(){
+  updateAIChips();
+  if(aiAutoEnabled)setTimeout(()=>runAIAnalysis('full'),500);
   // Score based on 3 factors
   let score=0;
   let chips=[];
@@ -1387,6 +1480,348 @@ function drawMiniLineChart(canvasId,data,color,fill=false){
   ctx.fillStyle='rgba(255,255,255,0.5)';ctx.font='8px monospace';
   ctx.fillText(mn.toFixed(4),4,H-5);ctx.fillText(mx.toFixed(4),4,10);
 }
+
+
+// ============================================================
+// AI INTELLIGENCE ENGINE — CLAUDE API
+// ============================================================
+let aiAutoEnabled=false;
+
+function updateAIChips(){
+  const sym=coin.replace('USDT','');
+  set('ai-chip-price','Price: '+pf(price));
+  set('ai-chip-fund','Fund: '+(fund>=0?'+':'')+fund.toFixed(4)+'%');
+  set('ai-chip-ls','L/S: '+lsLong.toFixed(0)+'%L / '+lsShort.toFixed(0)+'%S');
+  set('ai-chip-oi','OI: '+fmt(oi));
+  const zones=generateLiqZones(price,price*0.9,price*1.1).filter(z=>z.intensity>70).sort((a,b)=>b.intensity-a.intensity);
+  set('ai-chip-liq',zones[0]?pf(zones[0].price)+' ('+zones[0].type+')':'--');
+  set('ai-chip-ob',lsLong>60?'BID heavy':'ASK heavy');
+}
+
+function buildMarketContext(mode){
+  const sym=coin.replace('USDT','');
+  const zones=generateLiqZones(price,price*0.87,price*1.13);
+  const shortZones=zones.filter(z=>z.type==='short'&&z.intensity>50).sort((a,b)=>b.intensity-a.intensity).slice(0,5);
+  const longZones=zones.filter(z=>z.type==='long'&&z.intensity>50).sort((a,b)=>b.intensity-a.intensity).slice(0,5);
+  const topShortSqueeze=shortZones.map(z=>pf(z.price)+' (intensity:'+z.intensity.toFixed(0)+'%)').join(', ');
+  const topLongLiq=longZones.map(z=>pf(z.price)+' (intensity:'+z.intensity.toFixed(0)+'%)').join(', ');
+
+  const context=`
+LIVE MARKET DATA — ${sym}/USDT — ${new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'})} IST
+
+=== PRICE DATA ===
+Current Price: ${pf(price)}
+Market: Crypto Futures (Binance)
+
+=== FUNDING RATE ===
+Current Funding: ${fund.toFixed(4)}% per 8h
+Interpretation: ${fund<-0.05?'STRONGLY NEGATIVE — Shorts heavily paying longs (VERY BULLISH setup)':fund<0?'NEGATIVE — Shorts paying (Bullish lean)':fund>0.1?'STRONGLY POSITIVE — Longs heavily paying shorts (VERY BEARISH setup)':fund>0.01?'POSITIVE — Longs paying (Bearish lean)':'NEUTRAL — No clear bias'}
+Annualized: ${(fund*3*365).toFixed(1)}%
+
+=== LONG/SHORT RATIO ===
+Longs: ${lsLong.toFixed(1)}% | Shorts: ${lsShort.toFixed(1)}%
+Signal: ${lsLong>70?'EXTREME LONGS — Short squeeze very likely':lsLong<30?'EXTREME SHORTS — Long liquidation likely':lsLong>60?'Longs dominant':lsLong<40?'Shorts dominant':'Balanced'}
+
+=== OPEN INTEREST ===
+Total OI: ${fmt(oi)}
+24h Change: ${(oiChg>=0?'+':'')+oiChg.toFixed(2)}%
+OI Signal: ${oiChg>5?'Rising sharply — new aggressive positions entering':oiChg>2?'Rising — bullish new longs opening':oiChg<-5?'Falling sharply — de-leveraging':oiChg<-2?'Declining — positions closing':'Stable'}
+
+=== LIQUIDATION HEATMAP ZONES ===
+SHORT SQUEEZE Targets (price levels where shorts will be liquidated, price goes UP):
+${topShortSqueeze||'None detected'}
+
+LONG LIQUIDATION Targets (price levels where longs will be liquidated, price goes DOWN):
+${topLongLiq||'None detected'}
+
+Biggest zone overall: ${zones.sort((a,b)=>b.intensity-a.intensity)[0]?pf(zones.sort((a,b)=>b.intensity-a.intensity)[0].price)+' — '+zones.sort((a,b)=>b.intensity-a.intensity)[0].type.toUpperCase():' N/A'}
+
+=== ORDER BOOK SUMMARY ===
+Bid Pressure: ${lsLong.toFixed(0)}% | Ask Pressure: ${lsShort.toFixed(0)}%
+Book Bias: ${lsLong>55?'BUY side dominant':lsLong<45?'SELL side dominant':'Balanced'}
+`;
+  return context;
+}
+
+function getAIPrompt(mode, context){
+  const sym=coin.replace('USDT','');
+  const baseInstruction=`You are an expert crypto futures trader and quant analyst. Analyze the following ${sym}/USDT market data and provide actionable insights. Be specific with price levels. Use Indian trading style (mention "support", "resistance", "zone", "target"). Always give exact price numbers.`;
+
+  const prompts={
+    full:`${baseInstruction}
+
+${context}
+
+Provide a COMPLETE MARKET ANALYSIS in this exact format:
+
+## MARKET BIAS
+[State overall bias: STRONGLY BULLISH / BULLISH / NEUTRAL / BEARISH / STRONGLY BEARISH and explain why in 2-3 lines]
+
+## KEY OBSERVATION
+[Most important thing happening right now based on funding + heatmap combination — 2-3 lines]
+
+## BUY ZONES (LONG ENTRY)
+[List exactly 3 price levels where buying is safe, with reasoning for each. Format: "$XX,XXX — [reason]"]
+
+## SELL ZONES (SHORT ENTRY / EXIT LONG)
+[List exactly 3 price levels where selling pressure expected, with reasoning. Format: "$XX,XXX — [reason]"]
+
+## HEATMAP SUPPORT & RESISTANCE
+STRONG SUPPORT: [price] — [why it's strong, e.g., massive long liquidation cluster]
+MEDIUM SUPPORT: [price]
+STRONG RESISTANCE: [price] — [why it's strong, e.g., massive short liquidation cluster]  
+MEDIUM RESISTANCE: [price]
+
+## LIQUIDATION HUNT PREDICTION
+[Based on funding rate and L/S ratio, where will market makers push price next? Be specific.]
+
+## TRADE RECOMMENDATION
+Direction: [LONG/SHORT/WAIT]
+Entry: [specific price or zone]
+Target 1: [price] | Target 2: [price]
+Stop Loss: [price]
+Risk:Reward: [ratio]
+Confidence: [HIGH/MEDIUM/LOW]
+Reason: [2 lines max]`,
+
+    zones:`${baseInstruction}
+
+${context}
+
+Focus ONLY on BUY and SELL ZONES. Be very specific:
+
+## 🟢 BUY ZONES (Best long entry prices)
+Zone 1: $[price] — [exact reason: funding, heatmap, support]
+Zone 2: $[price] — [exact reason]
+Zone 3: $[price] — [exact reason]
+
+## 🔴 SELL ZONES (Best short entry / take profit)
+Zone 1: $[price] — [exact reason: resistance, short squeeze target, etc]
+Zone 2: $[price] — [exact reason]
+Zone 3: $[price] — [exact reason]
+
+## ⚡ STRONGEST ZONE RIGHT NOW
+[Single most important price level and why — 2 lines]`,
+
+    sr:`${baseInstruction}
+
+${context}
+
+Focus ONLY on Support & Resistance from the HEATMAP data:
+
+## 📊 HEATMAP-BASED S/R LEVELS
+
+RESISTANCE LEVELS (Short liquidation clusters — price magnets going UP):
+R3 (Mega): $[price] — Est. liquidation $[amount], [distance]% away
+R2 (Strong): $[price] — [reason]
+R1 (Nearest): $[price] — [reason]
+
+SUPPORT LEVELS (Long liquidation clusters — price magnets going DOWN):
+S1 (Nearest): $[price] — [reason]
+S2 (Strong): $[price] — [reason]
+S3 (Mega): $[price] — Est. liquidation $[amount], [distance]% away
+
+KEY LEVEL: $[price] — [The single most important level right now and why]
+
+PREDICTION: Price will likely test [support/resistance] at $[price] because [funding + heatmap reason]`,
+
+    trade:`${baseInstruction}
+
+${context}
+
+Give ONE specific trade setup right now:
+
+## ⚡ TRADE SETUP
+
+DIRECTION: [LONG / SHORT / NO TRADE — if no trade explain why]
+
+ENTRY PRICE: $[specific price]
+ENTRY REASON: [Why enter here — heatmap zone, funding, OB]
+
+STOP LOSS: $[price] ([X]% risk)
+SL REASON: [Why this SL — what level breaks the trade thesis]
+
+TARGET 1: $[price] ([X]% profit) — [why this level]
+TARGET 2: $[price] ([X]% profit) — [why this level]
+
+RISK:REWARD: 1:[ratio]
+CONFIDENCE: [HIGH/MEDIUM/LOW]
+
+MARKET MAKER GAME: [In 2 lines — what are market makers likely doing based on funding+heatmap]
+
+INVALIDATION: [What price action would invalidate this setup]`
+  };
+  return prompts[mode]||prompts.full;
+}
+
+async function runAIAnalysis(mode='full'){
+  updateAIChips();
+  if(!price||price===0){
+    setH('ai-output','<div style="text-align:center;padding:20px;color:var(--red);font-family:'Orbitron',monospace;font-size:10px">⚠️ PRICE DATA NAHI HAI — PEHLE REFRESH KARO</div>');
+    return;
+  }
+  // Show thinking state
+  el('ai-placeholder').style.display='none';
+  el('ai-result').style.display='none';
+  el('ai-thinking').style.display='block';
+  el('ai-cards').style.display='none';
+  const thinkTexts=['ANALYZING HEATMAP ZONES...','CALCULATING LIQUIDATION LEVELS...','PROCESSING FUNDING RATE...','MAPPING BUY/SELL ZONES...','GENERATING TRADE SETUP...'];
+  let ti=0;
+  const thinkInterval=setInterval(()=>{set('ai-think-txt',thinkTexts[ti%thinkTexts.length]);ti++;},800);
+
+  // Disable buttons
+  ['full','zones','sr','trade'].forEach(m=>{const b=el('ai-btn-'+m);if(b)b.disabled=true;});
+
+  try{
+    const context=buildMarketContext(mode);
+    const prompt=getAIPrompt(mode,context);
+
+    const response=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        system:'You are a professional crypto futures trader and quant analyst. Provide precise, actionable analysis. Always use exact price numbers. Be concise but complete. Format clearly with headers and bullet points.',
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    clearInterval(thinkInterval);
+    el('ai-thinking').style.display='none';
+
+    if(!response.ok){
+      throw new Error('API Error: '+response.status);
+    }
+    const data=await response.json();
+    const text=data.content?.[0]?.text||'No response';
+
+    // Render result
+    el('ai-result').style.display='block';
+    setH('ai-result',formatAIResponse(text,mode));
+    set('ai-last-time','Last: '+new Date().toLocaleTimeString());
+
+    // Parse and fill cards
+    parseAndFillCards(text,mode);
+    el('ai-cards').style.display='block';
+
+  }catch(e){
+    clearInterval(thinkInterval);
+    el('ai-thinking').style.display='none';
+    el('ai-result').style.display='block';
+    setH('ai-result',`<div style="padding:15px">
+      <div style="color:var(--red);font-family:'Orbitron',monospace;font-size:9px;margin-bottom:8px">⚠️ AI ERROR</div>
+      <div style="font-size:11px;color:var(--text);margin-bottom:12px">${e.message}</div>
+      <div style="padding:10px;background:rgba(0,0,0,0.4);border-radius:7px;font-size:11px;color:var(--bright);line-height:1.9">
+        ${getFallbackAnalysis(mode)}
+      </div>
+    </div>`);
+    el('ai-cards').style.display='none';
+  }
+  ['full','zones','sr','trade'].forEach(m=>{const b=el('ai-btn-'+m);if(b)b.disabled=false;});
+}
+
+function formatAIResponse(text,mode){
+  // Convert markdown to styled HTML
+  let html=text
+    .replace(/## (.+)/g,'<div class="ai-section"><h4>$1</h4>')
+    .replace(/
+
+/g,'</div><br>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong style="color:var(--bright)">$1</strong>')
+    .replace(/LONG/g,'<span style="color:var(--green);font-weight:700">LONG</span>')
+    .replace(/SHORT/g,'<span style="color:var(--red);font-weight:700">SHORT</span>')
+    .replace(/BULLISH/g,'<span style="color:var(--green);font-weight:700">BULLISH</span>')
+    .replace(/BEARISH/g,'<span style="color:var(--red);font-weight:700">BEARISH</span>')
+    .replace(/NEUTRAL/g,'<span style="color:var(--gold);font-weight:700">NEUTRAL</span>')
+    .replace(/HIGH CONFIDENCE/g,'<span style="color:var(--green);font-family:'Orbitron',monospace;font-size:9px">HIGH CONFIDENCE</span>')
+    .replace(/MEDIUM CONFIDENCE/g,'<span style="color:var(--gold);font-family:'Orbitron',monospace;font-size:9px">MEDIUM CONFIDENCE</span>')
+    .replace(/LOW CONFIDENCE/g,'<span style="color:var(--red);font-family:'Orbitron',monospace;font-size:9px">LOW CONFIDENCE</span>')
+    .replace(/(\\$[\d,]+)/g,'<span style="font-family:'Orbitron',monospace;color:var(--yellow);font-weight:700">$1</span>')
+    .replace(/
+/g,'<br>');
+  return`<div style="font-size:12px;color:var(--text);line-height:2;padding:4px">${html}</div>`;
+}
+
+function parseAndFillCards(text,mode){
+  const sym=coin.replace('USDT','');
+  const zones=generateLiqZones(price,price*0.87,price*1.13);
+  const shortZ=zones.filter(z=>z.type==='short'&&z.intensity>55).sort((a,b)=>b.intensity-a.intensity).slice(0,3);
+  const longZ=zones.filter(z=>z.type==='long'&&z.intensity>55).sort((a,b)=>b.intensity-a.intensity).slice(0,3);
+
+  // Buy zones
+  const buyHtml=longZ.map((z,i)=>`<div style="margin-bottom:6px">
+    <span class="ai-level-buy">${pf(z.price)}</span>
+    <span style="font-size:10px;color:var(--dim)"> ${((z.price-price)/price*100).toFixed(1)}% | Long LIQ zone | Intensity: ${z.intensity.toFixed(0)}%</span>
+  </div>`).join('')||'<span style="color:var(--dim);font-size:11px">No strong buy zones detected near price</span>';
+  setH('ai-buy-zones',buyHtml);
+
+  // Sell zones
+  const sellHtml=shortZ.map((z,i)=>`<div style="margin-bottom:6px">
+    <span class="ai-level-sell">${pf(z.price)}</span>
+    <span style="font-size:10px;color:var(--dim)"> +${((z.price-price)/price*100).toFixed(1)}% | Short LIQ zone | Intensity: ${z.intensity.toFixed(0)}%</span>
+  </div>`).join('')||'<span style="color:var(--dim);font-size:11px">No strong sell zones detected near price</span>';
+  setH('ai-sell-zones',sellHtml);
+
+  // S/R levels
+  const allTop=zones.filter(z=>z.intensity>65).sort((a,b)=>b.intensity-a.intensity).slice(0,6);
+  const srHtml=allTop.map(z=>{
+    const isAbove=z.price>price;
+    const dist=((z.price-price)/price*100);
+    return`<div style="margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span class="${isAbove?'ai-level-sell':'ai-level-buy'}">${pf(z.price)}</span>
+      <span style="font-size:10px;color:var(--dim)">${isAbove?'RESISTANCE':'SUPPORT'} | ${(dist>=0?'+':'')+dist.toFixed(1)}% | ${z.intensity>80?'🟡 MEGA':z.intensity>65?'🔵 STRONG':'🟢 MEDIUM'}</span>
+    </div>`;
+  }).join('');
+  setH('ai-sr-levels',srHtml||'<span style="color:var(--dim)">S/R levels calculating...</span>');
+
+  // Trade recommendation
+  const dir=fund<-0.02&&lsLong<55?'LONG':fund>0.05&&lsLong>60?'SHORT':'WAIT';
+  const nearestTarget=dir==='LONG'?shortZ[0]:longZ[0];
+  const nearestSL=dir==='LONG'?longZ[0]:shortZ[0];
+  const col=dir==='LONG'?'var(--green)':dir==='SHORT'?'var(--red)':'var(--gold)';
+  const tradeHtml=`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:${col}">${dir}</span>
+      <span style="font-size:10px;color:var(--dim)">${dir==='LONG'?'Funding negative + shorts crowded':dir==='SHORT'?'Funding positive + longs crowded':'Mixed signals — wait for clarity'}</span>
+    </div>
+    ${nearestTarget?`<div style="font-size:11px;color:var(--text)">
+      🎯 Target: <span style="font-family:'Orbitron',monospace;color:var(--gold)">${pf(nearestTarget.price)}</span> (${Math.abs((nearestTarget.price-price)/price*100).toFixed(1)}%)<br>
+      ⛔ Stop: <span style="font-family:'Orbitron',monospace;color:var(--red)">${nearestSL?pf(nearestSL.price):pf(price*(dir==='LONG'?0.97:1.03))}</span><br>
+      📊 Confidence: <span style="color:${Math.abs(fund)>0.05?'var(--green)':'var(--gold)'}">${Math.abs(fund)>0.05?'HIGH':'MEDIUM'}</span>
+    </div>`:'<div style="font-size:11px;color:var(--dim)">Entry zone calculating from heatmap...</div>'}`;
+  setH('ai-trade-rec',tradeHtml);
+}
+
+// Fallback analysis when API unavailable
+function getFallbackAnalysis(mode){
+  const sym=coin.replace('USDT','');
+  const zones=generateLiqZones(price,price*0.87,price*1.13);
+  const shortZ=zones.filter(z=>z.type==='short'&&z.intensity>60).sort((a,b)=>b.intensity-a.intensity);
+  const longZ=zones.filter(z=>z.type==='long'&&z.intensity>60).sort((a,b)=>b.intensity-a.intensity);
+  const bias=fund<-0.02?'BULLISH':fund>0.05?'BEARISH':'NEUTRAL';
+  const biasColor=fund<-0.02?'var(--green)':fund>0.05?'var(--red)':'var(--gold)';
+
+  return`<b style="font-family:'Orbitron',monospace;font-size:10px;color:${biasColor}">⚡ LOCAL AI ANALYSIS (API offline)</b><br><br>
+<b style="color:var(--accent)">Market Bias:</b> <span style="color:${biasColor};font-weight:700">${bias}</span><br>
+<b>Reason:</b> Funding ${fund.toFixed(4)}% (${fund<0?'shorts paying':'longs paying'}) + L/S ${lsLong.toFixed(0)}/${lsShort.toFixed(0)}<br><br>
+<b style="color:var(--green)">BUY ZONES:</b><br>
+${longZ.slice(0,3).map(z=>`• ${pf(z.price)} — Long LIQ zone (intensity ${z.intensity.toFixed(0)}%, ${((z.price-price)/price*100).toFixed(1)}%)`).join('<br>')||'• No strong buy zones near price'}<br><br>
+<b style="color:var(--red)">SELL ZONES:</b><br>
+${shortZ.slice(0,3).map(z=>`• ${pf(z.price)} — Short LIQ zone (intensity ${z.intensity.toFixed(0)}%, +${((z.price-price)/price*100).toFixed(1)}%)`).join('<br>')||'• No strong sell zones near price'}<br><br>
+<b style="color:var(--yellow)">HEATMAP S/R:</b><br>
+Resistance: ${shortZ[0]?pf(shortZ[0].price):pf(price*1.05)} (short squeeze target)<br>
+Support: ${longZ[0]?pf(longZ[0].price):pf(price*0.95)} (long liq zone)<br><br>
+<b style="color:var(--accent)">TRADE:</b> ${fund<-0.03&&lsLong<55?'LONG — funding negative, shorts crowded':fund>0.05&&lsLong>60?'SHORT — funding positive, longs crowded':'WAIT — mixed signals'}<br>
+<b>Note:</b> Claude AI API ke liye internet connection chahiye`;
+}
+
+function toggleAIAuto(){
+  aiAutoEnabled=el('ai-auto')?.checked||false;
+}
+
+// Call updateAIChips when data refreshes
+const _origUpdateSignal=typeof updateSignal==='function'?updateSignal:null;
 
 // ============================================================
 // CHANGE COIN + MAIN INIT
